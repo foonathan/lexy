@@ -30,6 +30,14 @@
 #    endif
 #endif
 
+#ifndef LEXY_HAS_UNICODE_DATABASE
+#    define LEXY_HAS_UNICODE_DATABASE 0
+#endif
+
+#ifndef LEXY_EXPERIMENTAL
+#    define LEXY_EXPERIMENTAL 0
+#endif
+
 //=== utility traits===//
 #define LEXY_MOV(...) static_cast<std::remove_reference_t<decltype(__VA_ARGS__)>&&>(__VA_ARGS__)
 #define LEXY_FWD(...) static_cast<decltype(__VA_ARGS__)>(__VA_ARGS__)
@@ -1333,7 +1341,12 @@ enum predefined_token_kind : std::uint_least16_t
     _smallest_predefined_token_kind = digits_token_kind,
 };
 
-constexpr const char* _kind_name(predefined_token_kind kind) noexcept
+template <typename T>
+constexpr const char* token_kind_name(const T&) noexcept
+{
+    return "token";
+}
+constexpr const char* token_kind_name(predefined_token_kind kind) noexcept
 {
     switch (kind)
     {
@@ -2116,13 +2129,35 @@ struct _deduce_encoding<std::byte>
 };
 } // namespace lexy
 
+//=== encoding traits ===//
+namespace lexy
+{
+template <typename Encoding>
+constexpr auto is_unicode_encoding
+    = std::is_same_v<Encoding, ascii_encoding> || std::is_same_v<Encoding, utf8_encoding>
+      || std::is_same_v<Encoding, utf8_char_encoding> || std::is_same_v<Encoding, utf16_encoding>
+      || std::is_same_v<Encoding, utf32_encoding>;
+
+template <typename Encoding>
+constexpr auto is_text_encoding
+    = is_unicode_encoding<Encoding> || std::is_same_v<Encoding, default_encoding>;
+
+template <typename Encoding>
+constexpr auto is_byte_encoding = std::is_same_v<Encoding, byte_encoding>;
+
+template <typename Encoding>
+constexpr auto is_char_encoding = is_text_encoding<Encoding> || is_byte_encoding<Encoding>;
+
+template <typename Encoding>
+constexpr auto is_node_encoding = false;
+} // namespace lexy
+
 //=== impls ===//
 namespace lexy::_detail
 {
 template <typename Encoding, typename CharT>
-constexpr bool is_compatible_char_type
-    = std::is_same_v<typename Encoding::char_type,
-                     CharT> || Encoding::template is_secondary_char_type<CharT>();
+constexpr bool is_compatible_char_type = std::is_same_v<typename Encoding::char_type, CharT>
+                                         || Encoding::template is_secondary_char_type<CharT>();
 
 template <typename Encoding, typename CharT>
 using require_secondary_char_type
@@ -2183,6 +2218,16 @@ public:
     using encoding = Encoding;
     using iterator = Iterator;
 
+    struct marker
+    {
+        iterator _it;
+
+        constexpr iterator position() const noexcept
+        {
+            return _it;
+        }
+    };
+
     constexpr explicit _rr(Iterator begin, Sentinel end) noexcept : _cur(begin), _end(end)
     {
         LEXY_PRECONDITION(lexy::_detail::precedes(begin, end));
@@ -2207,10 +2252,14 @@ public:
         return _cur;
     }
 
-    constexpr void set_position(iterator new_pos) noexcept
+    constexpr marker current() const noexcept
     {
-        LEXY_PRECONDITION(lexy::_detail::precedes(new_pos, _end));
-        _cur = new_pos;
+        return {_cur};
+    }
+    constexpr void reset(marker m) noexcept
+    {
+        LEXY_PRECONDITION(lexy::_detail::precedes(m._it, _end));
+        _cur = m._it;
     }
 
 private:
@@ -2301,6 +2350,19 @@ constexpr auto partial_input(const Reader& reader, typename Reader::iterator end
 //=== parse_events ===//
 namespace lexy::parse_events
 {
+/// Parsing started.
+/// Arguments: position
+struct grammar_start
+{};
+/// Parsing finished succesfully.
+/// Arguments: the reader at the final parse position.
+struct grammar_finish
+{};
+/// Parsing finished unsuccesfully.
+/// Arguments: the reader at the final parse position.
+struct grammar_cancel
+{};
+
 /// Start of the current production.
 /// Arguments: position
 struct production_start
@@ -2526,7 +2588,7 @@ LEXY_FORCE_INLINE constexpr auto try_match_token(TokenRule, Reader& reader)
     if constexpr (std::is_same_v<try_parse_result, std::true_type>)
     {
         parser.try_parse(reader);
-        reader.set_position(parser.end);
+        reader.reset(parser.end);
         return std::true_type{};
     }
     else if constexpr (std::is_same_v<try_parse_result, std::false_type>)
@@ -2539,7 +2601,7 @@ LEXY_FORCE_INLINE constexpr auto try_match_token(TokenRule, Reader& reader)
         if (!parser.try_parse(reader))
             return false;
 
-        reader.set_position(parser.end);
+        reader.reset(parser.end);
         return true;
     }
 }
@@ -2738,6 +2800,7 @@ constexpr void* no_parse_state = nullptr;
 template <typename Handler, typename State, typename Production, typename Reader>
 constexpr auto _do_action(_pc<Handler, State, Production>& context, Reader& reader)
 {
+    context.on(parse_events::grammar_start{}, reader.position());
     context.on(parse_events::production_start{}, reader.position());
 
     // We parse whitespace, theen the rule, then finish.
@@ -2747,9 +2810,15 @@ constexpr auto _do_action(_pc<Handler, State, Production>& context, Reader& read
     auto rule_result = parser::parse(context, reader);
 
     if (rule_result)
+    {
         context.on(parse_events::production_finish{}, reader.position());
+        context.on(parse_events::grammar_finish{}, reader);
+    }
     else
+    {
         context.on(parse_events::production_cancel{}, reader.position());
+        context.on(parse_events::grammar_cancel{}, reader);
+    }
 
     return rule_result;
 }
@@ -4199,13 +4268,13 @@ public:
     {
         auto ptr = static_cast<Derived&>(*this).position();
         ptr += swar_length<typename Derived::encoding::char_type>;
-        static_cast<Derived&>(*this).set_position(ptr);
+        static_cast<Derived&>(*this).reset({ptr});
     }
     void bump_swar(std::size_t char_count)
     {
         auto ptr = static_cast<Derived&>(*this).position();
         ptr += char_count;
-        static_cast<Derived&>(*this).set_position(ptr);
+        static_cast<Derived&>(*this).reset({ptr});
     }
 };
 
@@ -4360,7 +4429,7 @@ struct token_base : _token_inherit<ImplOrTag>
     template <typename Reader>
     struct bp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
         constexpr auto try_parse(const void*, const Reader& reader)
         {
@@ -4377,8 +4446,8 @@ struct token_base : _token_inherit<ImplOrTag>
         template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
-            context.on(_ev::token{}, Derived{}, reader.position(), end);
-            reader.set_position(end);
+            context.on(_ev::token{}, Derived{}, reader.position(), end.position());
+            reader.reset(end);
             return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
                                                                        LEXY_FWD(args)...);
         }
@@ -4399,16 +4468,17 @@ struct token_base : _token_inherit<ImplOrTag>
         {
             if (!parser.try_parse(reader))
             {
-                context.on(_ev::token{}, lexy::error_token_kind, reader.position(), parser.end);
+                context.on(_ev::token{}, lexy::error_token_kind, reader.position(),
+                           parser.end.position());
                 parser.report_error(context, reader);
-                reader.set_position(parser.end);
+                reader.reset(parser.end);
 
                 return false;
             }
         }
 
-        context.on(_ev::token{}, typename Derived::token_type{}, begin, parser.end);
-        reader.set_position(parser.end);
+        context.on(_ev::token{}, typename Derived::token_type{}, begin, parser.end.position());
+        reader.reset(parser.end);
 
         return true;
     }
@@ -4467,7 +4537,7 @@ struct _toke : token_base<_toke<Tag, Token>, Token>
         constexpr void report_error(Context& context, const Reader& reader)
         {
             // Report a different error.
-            auto err = lexy::error<Reader, Tag>(reader.position(), this->end);
+            auto err = lexy::error<Reader, Tag>(reader.position(), this->end.position());
             context.on(_ev::error{}, err);
         }
     };
@@ -4498,9 +4568,9 @@ struct _token : token_base<_token<Rule>>
     template <typename Reader>
     struct tp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr bool try_parse(Reader reader)
         {
@@ -4510,14 +4580,14 @@ struct _token : token_base<_token<Rule>>
                 lexy::match_action<void, Reader>::template result_type>(lexy::_mh(),
                                                                         lexy::no_parse_state,
                                                                         reader);
-            end = reader.position();
+            end = reader.current();
             return success;
         }
 
         template <typename Context>
         constexpr void report_error(Context& context, const Reader& reader)
         {
-            auto err = lexy::error<Reader, lexy::missing_token>(reader.position(), end);
+            auto err = lexy::error<Reader, lexy::missing_token>(reader.position(), end.position());
             context.on(_ev::error{}, err);
         }
     };
@@ -4544,9 +4614,9 @@ struct _any : token_base<_any, unconditional_branch_base>
     template <typename Reader>
     struct tp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr std::true_type try_parse(Reader reader)
         {
@@ -4561,7 +4631,7 @@ struct _any : token_base<_any, unconditional_branch_base>
             while (reader.peek() != encoding::eof())
                 reader.bump();
 
-            end = reader.position();
+            end = reader.current();
             return {};
         }
     };
@@ -4774,8 +4844,8 @@ class lexeme
 {
 public:
     using encoding  = typename Reader::encoding;
-    using char_type = typename encoding::char_type;
     using iterator  = typename Reader::iterator;
+    using char_type = LEXY_DECAY_DECLTYPE(*LEXY_DECLVAL(iterator&));
 
     constexpr lexeme() noexcept : _begin(), _end() {}
     constexpr lexeme(iterator begin, iterator end) noexcept : _begin(begin), _end(end) {}
@@ -4786,6 +4856,13 @@ public:
     constexpr explicit lexeme(const Reader& reader, iterator begin) noexcept
     : _begin(begin), _end(reader.position())
     {}
+
+    template <typename OtherReader, typename = std::enable_if_t<std::is_same_v<
+                                        typename Reader::iterator, typename OtherReader::iterator>>>
+    constexpr operator lexeme<OtherReader>() const noexcept
+    {
+        return lexeme<OtherReader>(this->begin(), this->end());
+    }
 
     constexpr bool empty() const noexcept
     {
@@ -4931,9 +5008,6 @@ inline constexpr auto token_kind_map_for<void> = token_kind_map;
 
 namespace lexy
 {
-template <typename TokenKind>
-using _detect_token_kind_name = decltype(token_kind_name(TokenKind{}));
-
 template <typename TokenRule>
 constexpr auto _has_special_token_kind = [] {
     using kind = LEXY_DECAY_DECLTYPE(lexy::token_kind_of<TokenRule>);
@@ -5017,12 +5091,13 @@ public:
     constexpr const char* name() const noexcept
     {
         if (is_predefined())
-            return _kind_name(static_cast<predefined_token_kind>(_value));
-        else if constexpr (lexy::_detail::is_detected<_detect_token_kind_name, TokenKind>)
-            return token_kind_name(get()); // ADL
+            return token_kind_name(static_cast<predefined_token_kind>(_value));
         else
-            // We only have a generic name.
-            return "token";
+            return token_kind_name(get()); // ADL
+    }
+    friend constexpr const char* token_kind_name(token_kind kind) noexcept
+    {
+        return kind.name();
     }
 
     constexpr _underlying_type get() const noexcept
@@ -5128,6 +5203,12 @@ using token_for = token<lexy::input_reader<Input>, TokenKind>;
 
 #endif // LEXY_TOKEN_HPP_INCLUDED
 
+
+namespace lexy
+{
+template <typename Node>
+struct parse_tree_input_traits;
+}
 
 //=== internal: pt_node ===//
 namespace lexy::_detail
@@ -5445,9 +5526,16 @@ private:
 //=== parse_tree ===//
 namespace lexy
 {
+template <typename Reader, typename TokenKind>
+class _pt_node_kind;
+template <typename Reader, typename TokenKind>
+class _pt_node;
+
 template <typename Reader, typename TokenKind = void, typename MemoryResource = void>
 class parse_tree
 {
+    static_assert(lexy::is_char_encoding<typename Reader::encoding>);
+
 public:
     //=== construction ===//
     class builder;
@@ -5481,8 +5569,8 @@ public:
     }
 
     //=== node access ===//
-    class node;
-    class node_kind;
+    using node_kind = _pt_node_kind<Reader, TokenKind>;
+    using node      = _pt_node<Reader, TokenKind>;
 
     node root() const noexcept
     {
@@ -5508,7 +5596,11 @@ public:
     //=== remaining input ===//
     lexy::lexeme<Reader> remaining_input() const noexcept
     {
-        return _remaining_input;
+        if (empty())
+            return {};
+
+        auto token = _root->next_node()->as_token();
+        return {token->begin, token->end()};
     }
 
 private:
@@ -5516,7 +5608,6 @@ private:
     _detail::pt_node_production<Reader>* _root;
     std::size_t                          _size;
     std::size_t                          _depth;
-    lexy::lexeme<Reader>                 _remaining_input;
 };
 
 template <typename Input, typename TokenKind = void, typename MemoryResource = void>
@@ -5660,12 +5751,29 @@ public:
     }
     explicit builder(production_info production) : builder(parse_tree(), production) {}
 
-    parse_tree&& finish(lexy::lexeme<Reader> remaining_input = {}) &&
+    [[deprecated("Pass the remaining input, or `input.end()` if there is none.")]] parse_tree&&
+        finish() &&
+    {
+        return LEXY_MOV(*this).finish(lexy::lexeme<Reader>());
+    }
+    parse_tree&& finish(typename Reader::iterator end) &&
+    {
+        return LEXY_MOV(*this).finish({end, end});
+    }
+    parse_tree&& finish(lexy::lexeme<Reader> remaining_input) &&
     {
         LEXY_PRECONDITION(_cur.prod == _result._root);
+
         _cur.insert_children_into(_cur.prod);
         _cur.update_size_depth(_result._size, _result._depth);
-        _result._remaining_input = remaining_input;
+
+        _result._buffer.reserve(sizeof(_detail::pt_node_token<Reader>));
+        auto node = _result._buffer
+                        .template allocate<_detail::pt_node_token<Reader>>(lexy::eof_token_kind,
+                                                                           remaining_input.begin(),
+                                                                           remaining_input.end());
+        _result._root->set_sibling(node);
+
         return LEXY_MOV(_result);
     }
 
@@ -5830,13 +5938,19 @@ public:
         }
     }
 
+    //=== accessors ===//
+    std::size_t current_child_count() const noexcept
+    {
+        return _cur.child_count;
+    }
+
 private:
     parse_tree _result;
     marker     _cur;
 };
 
-template <typename Reader, typename TokenKind, typename MemoryResource>
-class parse_tree<Reader, TokenKind, MemoryResource>::node_kind
+template <typename Reader, typename TokenKind>
+class _pt_node_kind
 {
 public:
     bool is_token() const noexcept
@@ -5850,8 +5964,10 @@ public:
 
     bool is_root() const noexcept
     {
-        // Root node has no next node.
-        return _ptr->next_node() == nullptr;
+        // Root node has a next node (the remaining input node) which has no next node.
+        // We assume that _ptr is never the remaining input node, so we know that we have a next
+        // node.
+        return _ptr->next_node()->next_node() == nullptr;
     }
     bool is_token_production() const noexcept
     {
@@ -5871,65 +5987,65 @@ public:
         }
     }
 
-    friend bool operator==(node_kind lhs, node_kind rhs)
+    friend bool operator==(_pt_node_kind lhs, _pt_node_kind rhs)
     {
         if (lhs.is_token() && rhs.is_token())
             return lhs._ptr->as_token()->kind == rhs._ptr->as_token()->kind;
         else
             return lhs._ptr->as_production()->id == rhs._ptr->as_production()->id;
     }
-    friend bool operator!=(node_kind lhs, node_kind rhs)
+    friend bool operator!=(_pt_node_kind lhs, _pt_node_kind rhs)
     {
         return !(lhs == rhs);
     }
 
-    friend bool operator==(node_kind nk, token_kind<TokenKind> tk)
+    friend bool operator==(_pt_node_kind nk, token_kind<TokenKind> tk)
     {
         if (auto token = nk._ptr->as_token())
             return token_kind<TokenKind>::from_raw(token->kind) == tk;
         else
             return false;
     }
-    friend bool operator==(token_kind<TokenKind> tk, node_kind nk)
+    friend bool operator==(token_kind<TokenKind> tk, _pt_node_kind nk)
     {
         return nk == tk;
     }
-    friend bool operator!=(node_kind nk, token_kind<TokenKind> tk)
+    friend bool operator!=(_pt_node_kind nk, token_kind<TokenKind> tk)
     {
         return !(nk == tk);
     }
-    friend bool operator!=(token_kind<TokenKind> tk, node_kind nk)
+    friend bool operator!=(token_kind<TokenKind> tk, _pt_node_kind nk)
     {
         return !(nk == tk);
     }
 
-    friend bool operator==(node_kind nk, production_info info)
+    friend bool operator==(_pt_node_kind nk, production_info info)
     {
         return nk.is_production() && nk._ptr->as_production()->id == info.id;
     }
-    friend bool operator==(production_info info, node_kind nk)
+    friend bool operator==(production_info info, _pt_node_kind nk)
     {
         return nk == info;
     }
-    friend bool operator!=(node_kind nk, production_info info)
+    friend bool operator!=(_pt_node_kind nk, production_info info)
     {
         return !(nk == info);
     }
-    friend bool operator!=(production_info info, node_kind nk)
+    friend bool operator!=(production_info info, _pt_node_kind nk)
     {
         return !(nk == info);
     }
 
 private:
-    explicit node_kind(_detail::pt_node<Reader>* ptr) : _ptr(ptr) {}
+    explicit _pt_node_kind(_detail::pt_node<Reader>* ptr) : _ptr(ptr) {}
 
     _detail::pt_node<Reader>* _ptr;
 
-    friend parse_tree::node;
+    friend _pt_node<Reader, TokenKind>;
 };
 
-template <typename Reader, typename TokenKind, typename MemoryResource>
-class parse_tree<Reader, TokenKind, MemoryResource>::node
+template <typename Reader, typename TokenKind>
+class _pt_node
 {
 public:
     void* address() const noexcept
@@ -5939,7 +6055,7 @@ public:
 
     auto kind() const noexcept
     {
-        return node_kind(_ptr);
+        return _pt_node_kind<Reader, TokenKind>(_ptr);
     }
 
     auto parent() const noexcept
@@ -5952,20 +6068,20 @@ public:
         auto cur = _ptr;
         while (cur->next_role() == _detail::pt_node<Reader>::role_sibling)
             cur = cur->next_node();
-        return node(cur->next_node());
+        return _pt_node(cur->next_node());
     }
 
     class children_range
     {
     public:
-        class iterator : public _detail::forward_iterator_base<iterator, node, node, void>
+        class iterator : public _detail::forward_iterator_base<iterator, _pt_node, _pt_node, void>
         {
         public:
             iterator() noexcept : _cur(nullptr) {}
 
-            node deref() const noexcept
+            auto deref() const noexcept
             {
-                return node(_cur);
+                return _pt_node(_cur);
             }
 
             void increment() noexcept
@@ -6021,7 +6137,7 @@ public:
 
         _detail::pt_node<Reader>* _node;
 
-        friend node;
+        friend _pt_node;
     };
 
     auto children() const noexcept
@@ -6032,14 +6148,14 @@ public:
     class sibling_range
     {
     public:
-        class iterator : public _detail::forward_iterator_base<iterator, node, node, void>
+        class iterator : public _detail::forward_iterator_base<iterator, _pt_node, _pt_node, void>
         {
         public:
             iterator() noexcept : _cur() {}
 
-            node deref() const noexcept
+            auto deref() const noexcept
             {
-                return node(_cur);
+                return _pt_node(_cur);
             }
 
             void increment() noexcept
@@ -6087,7 +6203,7 @@ public:
 
         _detail::pt_node<Reader>* _node;
 
-        friend node;
+        friend _pt_node;
     };
 
     auto siblings() const noexcept
@@ -6101,12 +6217,47 @@ public:
         return _ptr->next_role() == _detail::pt_node<Reader>::role_parent;
     }
 
+    auto position() const noexcept -> typename Reader::iterator
+    {
+        // Find the first descendant that is a token.
+        auto cur = _ptr;
+        while (cur->type() == _detail::pt_node<Reader>::type_production)
+        {
+            cur = cur->as_production()->first_child();
+            LEXY_PRECONDITION(cur);
+        }
+
+        return cur->as_token()->begin;
+    }
+
     auto lexeme() const noexcept
     {
         if (auto token = _ptr->as_token())
             return lexy::lexeme<Reader>(token->begin, token->end());
         else
             return lexy::lexeme<Reader>();
+    }
+
+    auto covering_lexeme() const noexcept
+    {
+        if (auto token = _ptr->as_token())
+            return lexy::lexeme<Reader>(token->begin, token->end());
+
+        auto begin = position();
+
+        auto sibling = _ptr;
+        while (true)
+        {
+            auto next_role = sibling->next_role();
+            sibling        = sibling->next_node();
+            // If we went to parent, we need to continue finding siblings.
+            if (next_role == _detail::pt_node<Reader>::role_sibling)
+                break;
+        }
+        auto end = _pt_node(sibling).position();
+
+        LEXY_PRECONDITION(begin == end || end != typename Reader::iterator());
+        return lexy::lexeme<Reader>(begin, end);
     }
 
     auto token() const noexcept
@@ -6118,21 +6269,22 @@ public:
         return lexy::token<Reader, TokenKind>(kind, token->begin, token->end());
     }
 
-    friend bool operator==(node lhs, node rhs) noexcept
+    friend bool operator==(_pt_node lhs, _pt_node rhs) noexcept
     {
         return lhs._ptr == rhs._ptr;
     }
-    friend bool operator!=(node lhs, node rhs) noexcept
+    friend bool operator!=(_pt_node lhs, _pt_node rhs) noexcept
     {
         return lhs._ptr != rhs._ptr;
     }
 
 private:
-    explicit node(_detail::pt_node<Reader>* ptr) noexcept : _ptr(ptr) {}
+    explicit _pt_node(_detail::pt_node<Reader>* ptr) noexcept : _ptr(ptr) {}
 
     _detail::pt_node<Reader>* _ptr;
 
-    friend parse_tree;
+    friend parse_tree<Reader, TokenKind>;
+    friend parse_tree_input_traits<_pt_node<Reader, TokenKind>>;
 };
 
 enum class traverse_event
@@ -6261,6 +6413,71 @@ private:
 };
 } // namespace lexy
 
+#if LEXY_EXPERIMENTAL
+namespace lexy
+{
+template <typename Reader, typename TokenKind>
+struct parse_tree_input_traits<_pt_node<Reader, TokenKind>>
+{
+    using _node = _pt_node<Reader, TokenKind>;
+
+    using char_encoding = typename Reader::encoding;
+
+    static bool is_null(_node cur) noexcept
+    {
+        return cur._ptr == nullptr;
+    }
+
+    static _node null() noexcept
+    {
+        return _node(nullptr);
+    }
+
+    static _node first_child(_node cur) noexcept
+    {
+        LEXY_PRECONDITION(!is_null(cur));
+        if (auto prod = cur._ptr->as_production())
+            return _node(prod->first_child());
+        else
+            return _node(nullptr);
+    }
+
+    static _node sibling(_node cur) noexcept
+    {
+        LEXY_PRECONDITION(!is_null(cur));
+        return cur._ptr->next_role() == _detail::pt_node<Reader>::role_sibling
+                   ? _node(cur._ptr->next_node())
+                   : _node(nullptr);
+    }
+
+    template <typename Kind>
+    static bool has_kind(_node cur, const Kind& kind) noexcept
+    {
+        return !is_null(cur) && cur.kind() == kind;
+    }
+
+    using iterator = typename Reader::iterator;
+
+    static iterator position_begin(_node cur) noexcept
+    {
+        LEXY_PRECONDITION(!is_null(cur));
+        return cur.position();
+    }
+    static iterator position_end(_node cur) noexcept
+    {
+        LEXY_PRECONDITION(!is_null(cur));
+        return cur.covering_lexeme().end();
+    }
+
+    static auto lexeme(_node cur) noexcept
+    {
+        LEXY_PRECONDITION(!is_null(cur));
+        return cur.lexeme();
+    }
+};
+} // namespace lexy
+#endif
+
 #endif // LEXY_PARSE_TREE_HPP_INCLUDED
 
 
@@ -6273,7 +6490,7 @@ public:
     template <typename Input, typename Sink>
     explicit _pth(Tree& tree, const _detail::any_holder<const Input*>& input,
                   _detail::any_holder<Sink>& sink)
-    : _tree(&tree), _depth(0), _validate(input, sink), _reader(input.get()->reader())
+    : _tree(&tree), _depth(0), _validate(input, sink)
     {}
 
     class event_handler
@@ -6283,47 +6500,59 @@ public:
     public:
         event_handler(production_info info) : _validate(info) {}
 
+        void on(_pth& handler, parse_events::grammar_start, iterator)
+        {
+            LEXY_PRECONDITION(handler._depth == 0);
+
+            handler._builder.emplace(LEXY_MOV(*handler._tree), _validate.get_info());
+        }
+        void on(_pth& handler, parse_events::grammar_finish, Reader& reader)
+        {
+            LEXY_PRECONDITION(handler._depth == 0);
+
+            auto begin = reader.position();
+            lexy::try_match_token(dsl::any, reader);
+            auto end = reader.position();
+
+            *handler._tree = LEXY_MOV(*handler._builder).finish({begin, end});
+        }
+        void on(_pth& handler, parse_events::grammar_cancel, Reader&)
+        {
+            LEXY_PRECONDITION(handler._depth == 0);
+
+            handler._tree->clear();
+        }
+
         void on(_pth& handler, parse_events::production_start ev, iterator pos)
         {
             if (handler._depth++ == 0)
-                handler._builder.emplace(LEXY_MOV(*handler._tree), _validate.get_info());
-            else
-                _marker = handler._builder->start_production(_validate.get_info());
+                return;
 
+            _marker = handler._builder->start_production(_validate.get_info());
             _validate.on(handler._validate, ev, pos);
         }
 
-        void on(_pth& handler, parse_events::production_finish, iterator pos)
+        void on(_pth& handler, parse_events::production_finish, iterator)
         {
             if (--handler._depth == 0)
-            {
-                auto reader = handler._reader;
-                reader.set_position(pos);
-                lexy::try_match_token(dsl::any, reader);
-                auto end = reader.position();
+                return;
 
-                *handler._tree = LEXY_MOV(*handler._builder).finish({pos, end});
-            }
-            else
-            {
-                handler._builder->finish_production(LEXY_MOV(_marker));
-            }
+            if (handler._builder->current_child_count() == 0)
+                handler._builder->token(lexy::position_token_kind, _validate.production_begin(),
+                                        _validate.production_begin());
+            handler._builder->finish_production(LEXY_MOV(_marker));
         }
 
         void on(_pth& handler, parse_events::production_cancel, iterator pos)
         {
             if (--handler._depth == 0)
-            {
-                handler._tree->clear();
-            }
-            else
-            {
-                // Cancelling the production removes all nodes from the tree.
-                // To ensure that the parse tree remains lossless, we add everything consumed by it
-                // as an error token.
-                handler._builder->cancel_production(LEXY_MOV(_marker));
-                handler._builder->token(lexy::error_token_kind, _validate.production_begin(), pos);
-            }
+                return;
+
+            // Cancelling the production removes all nodes from the tree.
+            // To ensure that the parse tree remains lossless, we add everything consumed by it
+            // as an error token.
+            handler._builder->cancel_production(LEXY_MOV(_marker));
+            handler._builder->token(lexy::error_token_kind, _validate.production_begin(), pos);
         }
 
         auto on(_pth& handler, lexy::parse_events::operation_chain_start, iterator)
@@ -6385,7 +6614,6 @@ private:
     int                                              _depth;
 
     _vh<Reader> _validate;
-    Reader      _reader;
 };
 
 template <typename State, typename Input, typename ErrorCallback, typename TokenKind = void,
@@ -6631,10 +6859,6 @@ struct macro_type_string
 #include <cstdint>
 
 
-
-#ifndef LEXY_HAS_UNICODE_DATABASE
-#    define LEXY_HAS_UNICODE_DATABASE 0
-#endif
 
 #if LEXY_HAS_UNICODE_DATABASE
 #    define LEXY_UNICODE_CONSTEXPR constexpr
@@ -7156,9 +7380,9 @@ enum class cp_error
 template <typename Reader>
 struct cp_result
 {
-    char32_t                  cp;
-    cp_error                  error;
-    typename Reader::iterator end;
+    char32_t                cp;
+    cp_error                error;
+    typename Reader::marker end;
 };
 
 template <typename Reader>
@@ -7167,16 +7391,16 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
     if constexpr (std::is_same_v<typename Reader::encoding, lexy::ascii_encoding>)
     {
         if (reader.peek() == Reader::encoding::eof())
-            return {{}, cp_error::eof, reader.position()};
+            return {{}, cp_error::eof, reader.current()};
 
         auto cur = reader.peek();
         reader.bump();
 
         auto cp = static_cast<char32_t>(cur);
         if (cp <= 0x7F)
-            return {cp, cp_error::success, reader.position()};
+            return {cp, cp_error::success, reader.current()};
         else
-            return {cp, cp_error::out_of_range, reader.position()};
+            return {cp, cp_error::out_of_range, reader.current()};
     }
     else if constexpr (std::is_same_v<typename Reader::encoding, lexy::utf8_encoding> //
                        || std::is_same_v<typename Reader::encoding, lexy::utf8_char_encoding>)
@@ -7199,11 +7423,11 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
         {
             // ASCII character.
             reader.bump();
-            return {first, cp_error::success, reader.position()};
+            return {first, cp_error::success, reader.current()};
         }
         else if ((first & ~payload_cont) == pattern_cont)
         {
-            return {{}, cp_error::leads_with_trailing, reader.position()};
+            return {{}, cp_error::leads_with_trailing, reader.current()};
         }
         else if ((first & ~payload_lead2) == pattern_lead2)
         {
@@ -7211,7 +7435,7 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
 
             auto second = uchar_t(reader.peek());
             if ((second & ~payload_cont) != pattern_cont)
-                return {{}, cp_error::missing_trailing, reader.position()};
+                return {{}, cp_error::missing_trailing, reader.current()};
             reader.bump();
 
             auto result = char32_t(first & payload_lead2);
@@ -7220,9 +7444,9 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
 
             // C0 and C1 are overlong ASCII.
             if (first == 0xC0 || first == 0xC1)
-                return {result, cp_error::overlong_sequence, reader.position()};
+                return {result, cp_error::overlong_sequence, reader.current()};
             else
-                return {result, cp_error::success, reader.position()};
+                return {result, cp_error::success, reader.current()};
         }
         else if ((first & ~payload_lead3) == pattern_lead3)
         {
@@ -7230,12 +7454,12 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
 
             auto second = uchar_t(reader.peek());
             if ((second & ~payload_cont) != pattern_cont)
-                return {{}, cp_error::missing_trailing, reader.position()};
+                return {{}, cp_error::missing_trailing, reader.current()};
             reader.bump();
 
             auto third = uchar_t(reader.peek());
             if ((third & ~payload_cont) != pattern_cont)
-                return {{}, cp_error::missing_trailing, reader.position()};
+                return {{}, cp_error::missing_trailing, reader.current()};
             reader.bump();
 
             auto result = char32_t(first & payload_lead3);
@@ -7246,11 +7470,11 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
 
             auto cp = result;
             if (0xD800 <= cp && cp <= 0xDFFF)
-                return {cp, cp_error::surrogate, reader.position()};
+                return {cp, cp_error::surrogate, reader.current()};
             else if (first == 0xE0 && second < 0xA0)
-                return {cp, cp_error::overlong_sequence, reader.position()};
+                return {cp, cp_error::overlong_sequence, reader.current()};
             else
-                return {cp, cp_error::success, reader.position()};
+                return {cp, cp_error::success, reader.current()};
         }
         else if ((first & ~payload_lead4) == pattern_lead4)
         {
@@ -7258,17 +7482,17 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
 
             auto second = uchar_t(reader.peek());
             if ((second & ~payload_cont) != pattern_cont)
-                return {{}, cp_error::missing_trailing, reader.position()};
+                return {{}, cp_error::missing_trailing, reader.current()};
             reader.bump();
 
             auto third = uchar_t(reader.peek());
             if ((third & ~payload_cont) != pattern_cont)
-                return {{}, cp_error::missing_trailing, reader.position()};
+                return {{}, cp_error::missing_trailing, reader.current()};
             reader.bump();
 
             auto fourth = uchar_t(reader.peek());
             if ((fourth & ~payload_cont) != pattern_cont)
-                return {{}, cp_error::missing_trailing, reader.position()};
+                return {{}, cp_error::missing_trailing, reader.current()};
             reader.bump();
 
             auto result = char32_t(first & payload_lead4);
@@ -7281,15 +7505,15 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
 
             auto cp = result;
             if (cp > 0x10'FFFF)
-                return {cp, cp_error::out_of_range, reader.position()};
+                return {cp, cp_error::out_of_range, reader.current()};
             else if (first == 0xF0 && second < 0x90)
-                return {cp, cp_error::overlong_sequence, reader.position()};
+                return {cp, cp_error::overlong_sequence, reader.current()};
             else
-                return {cp, cp_error::success, reader.position()};
+                return {cp, cp_error::success, reader.current()};
         }
         else // FE or FF
         {
-            return {{}, cp_error::eof, reader.position()};
+            return {{}, cp_error::eof, reader.current()};
         }
     }
     else if constexpr (std::is_same_v<typename Reader::encoding, lexy::utf16_encoding>)
@@ -7301,18 +7525,18 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
         constexpr auto pattern2 = 0b110111 << 10;
 
         if (reader.peek() == Reader::encoding::eof())
-            return {{}, cp_error::eof, reader.position()};
+            return {{}, cp_error::eof, reader.current()};
 
         auto first = char16_t(reader.peek());
         if ((first & ~payload1) == pattern1)
         {
             reader.bump();
             if (reader.peek() == Reader::encoding::eof())
-                return {{}, cp_error::missing_trailing, reader.position()};
+                return {{}, cp_error::missing_trailing, reader.current()};
 
             auto second = char16_t(reader.peek());
             if ((second & ~payload2) != pattern2)
-                return {{}, cp_error::missing_trailing, reader.position()};
+                return {{}, cp_error::missing_trailing, reader.current()};
             reader.bump();
 
             // We've got a valid code point.
@@ -7320,34 +7544,34 @@ constexpr cp_result<Reader> parse_code_point(Reader reader)
             result <<= 10;
             result |= char32_t(second & payload2);
             result |= 0x10000;
-            return {result, cp_error::success, reader.position()};
+            return {result, cp_error::success, reader.current()};
         }
         else if ((first & ~payload2) == pattern2)
         {
-            return {{}, cp_error::leads_with_trailing, reader.position()};
+            return {{}, cp_error::leads_with_trailing, reader.current()};
         }
         else
         {
             // Single code unit code point; always valid.
             reader.bump();
-            return {first, cp_error::success, reader.position()};
+            return {first, cp_error::success, reader.current()};
         }
     }
     else if constexpr (std::is_same_v<typename Reader::encoding, lexy::utf32_encoding>)
     {
         if (reader.peek() == Reader::encoding::eof())
-            return {{}, cp_error::eof, reader.position()};
+            return {{}, cp_error::eof, reader.current()};
 
         auto cur = reader.peek();
         reader.bump();
 
         auto cp = cur;
         if (cp > 0x10'FFFF)
-            return {cp, cp_error::out_of_range, reader.position()};
+            return {cp, cp_error::out_of_range, reader.current()};
         else if (0xD800 <= cp && cp <= 0xDFFF)
-            return {cp, cp_error::surrogate, reader.position()};
+            return {cp, cp_error::surrogate, reader.current()};
         else
-            return {cp, cp_error::success, reader.position()};
+            return {cp, cp_error::success, reader.current()};
     }
     else
     {
@@ -7364,7 +7588,7 @@ constexpr void recover_code_point(Reader& reader, cp_result<Reader> result)
     {
     case cp_error::success:
         // Consume the entire code point.
-        reader.set_position(result.end);
+        reader.reset(result.end);
         break;
     case cp_error::eof:
         // We don't need to do anything to "recover" from EOF.
@@ -7372,7 +7596,7 @@ constexpr void recover_code_point(Reader& reader, cp_result<Reader> result)
 
     case cp_error::leads_with_trailing:
         // Invalid code unit, consume to recover.
-        LEXY_PRECONDITION(result.end == reader.position());
+        LEXY_PRECONDITION(result.end.position() == reader.position());
         reader.bump();
         break;
 
@@ -7381,7 +7605,7 @@ constexpr void recover_code_point(Reader& reader, cp_result<Reader> result)
     case cp_error::out_of_range:
     case cp_error::overlong_sequence:
         // Consume all the invalid code units to recover.
-        reader.set_position(result.end);
+        reader.reset(result.end);
         break;
     }
 }
@@ -7588,17 +7812,19 @@ struct char_class_base : token_base<Derived>, _char_class_base
     template <typename Reader>
     struct tp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr bool try_parse(Reader reader)
         {
+            static_assert(lexy::is_char_encoding<typename Reader::encoding>);
+
             using matcher = lexy::_detail::ascii_set_matcher<_cas<Derived>>;
             if (matcher::template match<typename Reader::encoding>(reader.peek()))
             {
                 reader.bump();
-                end = reader.position();
+                end = reader.current();
                 return true;
             }
 
@@ -7607,25 +7833,7 @@ struct char_class_base : token_base<Derived>, _char_class_base
             {
                 return false;
             }
-            else if constexpr (std::is_same_v<typename Reader::encoding, lexy::default_encoding> //
-                               || std::is_same_v<typename Reader::encoding, lexy::byte_encoding>)
-            {
-                static_assert(!Derived::char_class_unicode(),
-                              "cannot use this character class with default/byte_encoding");
-
-                if (reader.peek() == Reader::encoding::eof())
-                    return false;
-
-                auto cp = static_cast<char32_t>(reader.peek());
-                reader.bump();
-
-                if (!Derived::char_class_match_cp(cp))
-                    return false;
-
-                end = reader.position();
-                return true;
-            }
-            else
+            else if constexpr (lexy::is_unicode_encoding<typename Reader::encoding>)
             {
                 static_assert(Derived::char_class_unicode(),
                               "cannot use this character class with Unicode encoding");
@@ -7639,6 +7847,23 @@ struct char_class_base : token_base<Derived>, _char_class_base
                     return false;
 
                 end = result.end;
+                return true;
+            }
+            else
+            {
+                static_assert(!Derived::char_class_unicode(),
+                              "cannot use this character class with non-Unicode char encodings");
+
+                if (reader.peek() == Reader::encoding::eof())
+                    return false;
+
+                auto cp = static_cast<char32_t>(reader.peek());
+                reader.bump();
+
+                if (!Derived::char_class_match_cp(cp))
+                    return false;
+
+                end = reader.current();
                 return true;
             }
         }
@@ -7745,8 +7970,8 @@ constexpr auto _make_char_class(C c)
     return c;
 }
 template <typename CharT, CharT C,
-          typename = std::enable_if_t<
-              C <= 0x7F || std::is_same_v<CharT, char32_t> || std::is_same_v<CharT, unsigned char>>>
+          typename = std::enable_if_t<C <= 0x7F || std::is_same_v<CharT, char32_t>
+                                      || std::is_same_v<CharT, unsigned char>>>
 constexpr auto _make_char_class(_lit<CharT, C>)
 {
     if constexpr (std::is_same_v<CharT, unsigned char>)
@@ -7795,8 +8020,8 @@ struct _calt : char_class_base<_calt<Cs...>>
 
     static constexpr auto char_class_match_cp(char32_t cp)
     {
-        if constexpr ((std::is_same_v<decltype(Cs::char_class_match_cp(cp)),
-                                      std::false_type> && ...))
+        if constexpr ((std::is_same_v<decltype(Cs::char_class_match_cp(cp)), std::false_type>
+                       && ...))
             return std::false_type{};
         else
             return (Cs::char_class_match_cp(cp) || ...);
@@ -7956,8 +8181,8 @@ struct _cand : char_class_base<_cand<Cs...>>
 
     static constexpr auto char_class_match_cp(char32_t cp)
     {
-        if constexpr ((std::is_same_v<decltype(Cs::char_class_match_cp(cp)),
-                                      std::false_type> && ...))
+        if constexpr ((std::is_same_v<decltype(Cs::char_class_match_cp(cp)), std::false_type>
+                       && ...))
             return std::false_type{};
         else
             return (Cs::char_class_match_cp(cp) && ...);
@@ -8221,6 +8446,7 @@ namespace lexy::_detail
 template <std::size_t CurCharIndex, typename CharT, CharT... Cs, typename Reader>
 constexpr auto match_literal(Reader& reader)
 {
+    static_assert(lexy::is_char_encoding<typename Reader::encoding>);
     using char_type = typename Reader::encoding::char_type;
     if constexpr (CurCharIndex >= sizeof...(Cs))
     {
@@ -8387,11 +8613,11 @@ struct _merge_case_folding<CurrentCaseFolding, H, T...>
                                          typename H::lit_case_folding, CurrentCaseFolding>,
                       T...>
 {
-    static_assert(
-        std::is_same_v<CurrentCaseFolding,
-                       typename H::lit_case_folding> //
-            || std::is_void_v<CurrentCaseFolding> || std::is_void_v<typename H::lit_case_folding>,
-        "cannot mix literals with different case foldings in a literal_set");
+    static_assert(std::is_same_v<CurrentCaseFolding,
+                                 typename H::lit_case_folding> //
+                      || std::is_void_v<CurrentCaseFolding>
+                      || std::is_void_v<typename H::lit_case_folding>,
+                  "cannot mix literals with different case foldings in a literal_set");
 };
 
 template <typename Reader>
@@ -8475,7 +8701,7 @@ struct lit_trie_matcher<Trie, CurNode>
 
             if constexpr (sizeof...(Idx) > 0)
             {
-                auto cur_pos  = reader.position();
+                auto cur      = reader.current();
                 auto cur_char = reader.peek();
 
                 auto next_value = Trie.node_no_match;
@@ -8486,7 +8712,7 @@ struct lit_trie_matcher<Trie, CurNode>
                     return next_value;
 
                 // We haven't found a longer match, return our match.
-                reader.set_position(cur_pos);
+                reader.reset(cur);
             }
 
             // But first, we might need to check that we don't match that nodes char class.
@@ -8508,6 +8734,7 @@ struct lit_trie_matcher<Trie, CurNode>
     template <typename Reader>
     LEXY_FORCE_INLINE static constexpr std::size_t try_match(Reader& _reader)
     {
+        static_assert(lexy::is_char_encoding<typename Reader::encoding>);
         if constexpr (std::is_same_v<CaseFolding<Reader>, Reader>)
         {
             return _impl<>::try_match(_reader);
@@ -8516,7 +8743,7 @@ struct lit_trie_matcher<Trie, CurNode>
         {
             CaseFolding<Reader> reader{_reader};
             auto                result = _impl<>::try_match(reader);
-            _reader.set_position(reader.position());
+            _reader.reset(reader.current());
             return result;
         }
     }
@@ -8553,14 +8780,14 @@ struct _lit
     template <typename Reader>
     struct tp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr auto try_parse(Reader reader)
         {
             auto result = lexy::_detail::match_literal<0, CharT, C...>(reader);
-            end         = reader.position();
+            end         = reader.current();
             return result;
         }
 
@@ -8571,7 +8798,7 @@ struct _lit
             constexpr auto str = lexy::_detail::type_string<CharT, C...>::template c_str<char_type>;
 
             auto begin = reader.position();
-            auto index = lexy::_detail::range_size(begin, this->end);
+            auto index = lexy::_detail::range_size(begin, end.position());
             auto err = lexy::error<Reader, lexy::expected_literal>(begin, str, index, sizeof...(C));
             context.on(_ev::error{}, err);
         }
@@ -8648,9 +8875,9 @@ struct _lcp : token_base<_lcp<Cp...>>, _lit_base
     template <typename Reader, std::size_t... Idx>
     struct tp<Reader, lexy::_detail::index_sequence<Idx...>>
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr bool try_parse(Reader reader)
         {
@@ -8658,7 +8885,7 @@ struct _lcp : token_base<_lcp<Cp...>>, _lit_base
 
             auto result = lexy::_detail::match_literal<0, typename encoding::char_type,
                                                        _string<encoding>.data[Idx]...>(reader);
-            end         = reader.position();
+            end         = reader.current();
             return result;
         }
 
@@ -8668,7 +8895,7 @@ struct _lcp : token_base<_lcp<Cp...>>, _lit_base
             using encoding = typename Reader::encoding;
 
             auto begin = reader.position();
-            auto index = lexy::_detail::range_size(begin, end);
+            auto index = lexy::_detail::range_size(begin, end.position());
             auto err   = lexy::error<Reader, lexy::expected_literal>(begin, _string<encoding>.data,
                                                                    index, _string<encoding>.length);
             context.on(_ev::error{}, err);
@@ -8740,9 +8967,9 @@ struct _lset : token_base<_lset<Literals...>>, _lset_base
     template <typename Reader>
     struct tp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr bool try_parse(Reader reader)
         {
@@ -8750,7 +8977,7 @@ struct _lset : token_base<_lset<Literals...>>, _lset_base
             using matcher  = lexy::_detail::lit_trie_matcher<_t<encoding>, 0>;
 
             auto result = matcher::try_match(reader);
-            end         = reader.position();
+            end         = reader.current();
             return result != _t<encoding>.node_no_match;
         }
 
@@ -8854,6 +9081,8 @@ struct _eol : branch_base
     template <typename Reader>
     struct bp
     {
+        static_assert(lexy::is_char_encoding<typename Reader::encoding>);
+
         constexpr bool try_parse(const void*, Reader reader)
         {
             return reader.peek() == Reader::encoding::eof()
@@ -8888,6 +9117,7 @@ struct _eol : branch_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            static_assert(lexy::is_char_encoding<typename Reader::encoding>);
             return bp<Reader>{}.template finish<NextParser>(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -8909,18 +9139,18 @@ namespace lexy
 template <typename Input>
 struct input_location_anchor
 {
-    using iterator = typename lexy::input_reader<Input>::iterator;
+    using marker = typename lexy::input_reader<Input>::marker;
 
     constexpr explicit input_location_anchor(const Input& input)
-    : _line_begin(input.reader().position()), _line_nr(1)
+    : _line_begin(input.reader().current()), _line_nr(1)
     {}
 
     // implementation detail
-    constexpr explicit input_location_anchor(iterator line_begin, unsigned line_nr)
+    constexpr explicit input_location_anchor(marker line_begin, unsigned line_nr)
     : _line_begin(line_begin), _line_nr(line_nr)
     {}
 
-    iterator _line_begin;
+    marker   _line_begin;
     unsigned _line_nr;
 };
 } // namespace lexy
@@ -8935,12 +9165,14 @@ public:
     template <typename Reader>
     constexpr bool try_match_newline(Reader& reader)
     {
+        static_assert(lexy::is_char_encoding<typename Reader::encoding>);
         return lexy::try_match_token(lexy::dsl::newline, reader);
     }
 
     template <typename Reader>
     constexpr void match_column(Reader& reader)
     {
+        static_assert(lexy::is_char_encoding<typename Reader::encoding>);
         reader.bump();
     }
 };
@@ -8952,12 +9184,14 @@ public:
     template <typename Reader>
     constexpr bool try_match_newline(Reader& reader)
     {
+        static_assert(lexy::is_char_encoding<typename Reader::encoding>);
         return lexy::try_match_token(lexy::dsl::newline, reader);
     }
 
     template <typename Reader>
     constexpr void match_column(Reader& reader)
     {
+        static_assert(lexy::is_char_encoding<typename Reader::encoding>);
         if (!lexy::try_match_token(lexy::dsl::code_point, reader))
             reader.bump();
     }
@@ -8971,6 +9205,7 @@ public:
     template <typename Reader>
     constexpr bool try_match_newline(Reader& reader)
     {
+        static_assert(lexy::is_byte_encoding<typename Reader::encoding>);
         LEXY_PRECONDITION(_cur_index <= LineWidth - 1);
         if (_cur_index == LineWidth - 1)
         {
@@ -8991,7 +9226,7 @@ public:
     template <typename Reader>
     constexpr void match_column(Reader& reader)
     {
-        static_assert(std::is_same_v<typename Reader::encoding, lexy::byte_encoding>);
+        static_assert(lexy::is_byte_encoding<typename Reader::encoding>);
 
         reader.bump();
         ++_cur_index;
@@ -9002,9 +9237,20 @@ private:
 };
 
 template <typename Input>
-using _default_location_counting = std::conditional_t<
-    std::is_same_v<typename lexy::input_reader<Input>::encoding, lexy::byte_encoding>,
-    byte_location_counting<>, code_unit_location_counting>;
+auto _compute_default_location_counting()
+{
+    using encoding = typename lexy::input_reader<Input>::encoding;
+    if constexpr (lexy::is_byte_encoding<encoding>)
+        return byte_location_counting{};
+    else if constexpr (lexy::is_char_encoding<encoding>)
+        return code_unit_location_counting{};
+    else
+        static_assert(_detail::error<Input>,
+                      "input encoding does not have a default location counting policy");
+}
+
+template <typename Input>
+using _default_location_counting = decltype(_compute_default_location_counting<Input>());
 } // namespace lexy
 
 //=== input_location ===//
@@ -9015,10 +9261,12 @@ template <typename Input, typename Counting = _default_location_counting<Input>>
 class input_location
 {
     using iterator = typename lexy::input_reader<Input>::iterator;
+    using marker   = typename lexy::input_reader<Input>::marker;
 
 public:
     constexpr explicit input_location(const Input& input)
-    : _line_begin(input.reader().position()), _column_begin(_line_begin), _line_nr(1), _column_nr(1)
+    : _line_begin(input.reader().current()), _column_begin(_line_begin.position()), _line_nr(1),
+      _column_nr(1)
     {}
 
     /// The closest previous anchor.
@@ -9071,12 +9319,13 @@ public:
     }
 
 private:
-    constexpr input_location(iterator line_begin, unsigned line_nr, iterator column_begin,
+    constexpr input_location(marker line_begin, unsigned line_nr, iterator column_begin,
                              unsigned column_nr)
     : _line_begin(line_begin), _column_begin(column_begin), _line_nr(line_nr), _column_nr(column_nr)
     {}
 
-    iterator _line_begin, _column_begin;
+    marker   _line_begin;
+    iterator _column_begin;
     unsigned _line_nr, _column_nr;
 
     template <typename C, typename I>
@@ -9094,7 +9343,7 @@ constexpr auto get_input_location(const Input&                                 i
     -> input_location<Input, Counting>
 {
     auto reader = input.reader();
-    reader.set_position(anchor._line_begin);
+    reader.reset(anchor._line_begin);
 
     auto line_begin   = anchor._line_begin;
     auto line_nr      = anchor._line_nr;
@@ -9120,8 +9369,10 @@ constexpr auto get_input_location(const Input&                                 i
         else if (counting.try_match_newline(reader))
         {
             // [column_begin, newline_end) covers the newline.
-            auto newline_end = reader.position();
-            if (lexy::_detail::min_range_end(column_begin, newline_end, position) != newline_end)
+            auto newline_end = reader.current();
+            if (lexy::_detail::min_range_end(column_begin.position(), newline_end.position(),
+                                             position)
+                != newline_end.position())
                 break;
 
             // Advance to the next line.
@@ -9135,8 +9386,10 @@ constexpr auto get_input_location(const Input&                                 i
             counting.match_column(reader);
 
             // [column_begin, column_end) covers the column.
-            auto column_end = reader.position();
-            if (lexy::_detail::min_range_end(column_begin, column_end, position) != column_end)
+            auto column_end = reader.current();
+            if (lexy::_detail::min_range_end(column_begin.position(), column_end.position(),
+                                             position)
+                != column_end.position())
                 break;
 
             // Advance to the next column.
@@ -9145,7 +9398,7 @@ constexpr auto get_input_location(const Input&                                 i
         }
     }
 
-    return {line_begin, line_nr, column_begin, column_nr};
+    return {line_begin, line_nr, column_begin.position(), column_nr};
 }
 
 template <typename Counting, typename Input>
@@ -9174,11 +9427,11 @@ constexpr auto get_input_location(const Input&                                 i
 namespace lexy::_detail
 {
 template <typename Counting, typename Input>
-constexpr auto get_input_line(const Input&                                 input,
-                              typename lexy::input_reader<Input>::iterator line_begin)
+constexpr auto get_input_line(const Input&                               input,
+                              typename lexy::input_reader<Input>::marker line_begin)
 {
     auto reader = input.reader();
-    reader.set_position(line_begin);
+    reader.reset(line_begin);
 
     auto line_end = reader.position();
     for (Counting counting;
@@ -9194,7 +9447,7 @@ constexpr auto get_input_line(const Input&                                 input
         lexy::lexeme_for<Input> line;
         lexy::lexeme_for<Input> newline;
     };
-    return result_t{{line_begin, line_end}, {line_end, newline_end}};
+    return result_t{{line_begin.position(), line_end}, {line_end, newline_end}};
 }
 
 // Advances the iterator to the beginning of the next code point.
@@ -9778,32 +10031,7 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
     };
 
     using encoding = typename Reader::encoding;
-    if constexpr (std::is_same_v<encoding, lexy::ascii_encoding> //
-                  || std::is_same_v<encoding, lexy::default_encoding>)
-    {
-        auto count = 0u;
-        for (char c : lexeme)
-        {
-            // If the character is in fact ASCII, visualize the code point.
-            // Otherwise, visualize as byte.
-            if (lexy::_detail::is_ascii(c))
-                out = visualize_to(out, lexy::code_point(static_cast<char32_t>(c)), opts);
-            else
-                out = write_escaped_byte(out, static_cast<unsigned char>(c));
-
-            ++count;
-            if (count == opts.max_lexeme_width)
-            {
-                out = _detail::write_ellipsis(out, opts);
-                break;
-            }
-        }
-        return out;
-    }
-    else if constexpr (std::is_same_v<encoding, lexy::utf8_encoding>         //
-                       || std::is_same_v<encoding, lexy::utf8_char_encoding> //
-                       || std::is_same_v<encoding, lexy::utf16_encoding>     //
-                       || std::is_same_v<encoding, lexy::utf32_encoding>)
+    if constexpr (lexy::is_unicode_encoding<encoding>)
     {
         // Parse the individual code points, and write them out.
         lexy::range_input<encoding, typename Reader::iterator> input(lexeme.begin(), lexeme.end());
@@ -9821,7 +10049,7 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
             else if (result.error == lexy::_detail::cp_error::success)
             {
                 // Consume and visualize.
-                reader.set_position(result.end);
+                reader.reset(result.end);
                 out = visualize_to(out, lexy::code_point(result.cp), opts);
             }
             else
@@ -9876,7 +10104,28 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
         }
         return out;
     }
-    else if constexpr (std::is_same_v<encoding, lexy::byte_encoding>)
+    else if constexpr (lexy::is_text_encoding<encoding>)
+    {
+        auto count = 0u;
+        for (char c : lexeme)
+        {
+            // If the character is in fact ASCII, visualize the code point.
+            // Otherwise, visualize as byte.
+            if (lexy::_detail::is_ascii(c))
+                out = visualize_to(out, lexy::code_point(static_cast<char32_t>(c)), opts);
+            else
+                out = write_escaped_byte(out, static_cast<unsigned char>(c));
+
+            ++count;
+            if (count == opts.max_lexeme_width)
+            {
+                out = _detail::write_ellipsis(out, opts);
+                break;
+            }
+        }
+        return out;
+    }
+    else if constexpr (lexy::is_byte_encoding<encoding>)
     {
         auto count = 0u;
         for (auto iter = lexeme.begin(); iter != lexeme.end(); ++iter)
@@ -9894,6 +10143,13 @@ OutputIt visualize_to(OutputIt out, lexy::lexeme<Reader> lexeme,
             }
         }
         return out;
+    }
+    else if constexpr (lexy::is_node_encoding<encoding>)
+    {
+        // Visualize as an iterator range of characters.
+        lexy::range_input<typename encoding::char_encoding, typename Reader::iterator>
+            input(lexeme.begin(), lexeme.end());
+        return visualize_to(out, lexy::lexeme_for<decltype(input)>(input.begin(), input.end()));
     }
     else
     {
@@ -10152,7 +10408,8 @@ constexpr auto debug = lexy::_detail::to_type_string<_debug, Str>{};
 #endif
 
 #define LEXY_DEBUG(Str)                                                                            \
-    LEXY_NTTP_STRING(::lexyd::_debug, Str) {}
+    LEXY_NTTP_STRING(::lexyd::_debug, Str)                                                         \
+    {}
 } // namespace lexyd
 
 //=== trace ====//
@@ -10427,6 +10684,10 @@ public:
 
     public:
         constexpr event_handler(production_info info) : _info(info) {}
+
+        void on(_th&, parse_events::grammar_start, iterator) {}
+        void on(_th&, parse_events::grammar_finish, lexy::input_reader<Input>&) {}
+        void on(_th&, parse_events::grammar_cancel, lexy::input_reader<Input>&) {}
 
         void on(_th& handler, parse_events::production_start, iterator pos)
         {
@@ -11236,13 +11497,13 @@ struct _bits : token_base<_bits<Mask, Value>>
     template <typename Reader>
     struct tp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr bool try_parse(Reader reader)
         {
-            static_assert(std::is_same_v<typename Reader::encoding, lexy::byte_encoding>);
+            static_assert(lexy::is_byte_encoding<typename Reader::encoding>);
 
             auto byte = reader.peek();
             if (byte == Reader::encoding::eof()
@@ -11250,14 +11511,14 @@ struct _bits : token_base<_bits<Mask, Value>>
                 return false;
 
             reader.bump();
-            end = reader.position();
+            end = reader.current();
             return true;
         }
 
         template <typename Context>
         constexpr void report_error(Context& context, const Reader&)
         {
-            auto err = lexy::error<Reader, lexy::expected_char_class>(end, "bits");
+            auto err = lexy::error<Reader, lexy::expected_char_class>(end.position(), "bits");
             context.on(_ev::error{}, err);
         }
     };
@@ -11642,7 +11903,7 @@ struct _err : unconditional_branch_base
             {
                 lexy::token_parser_for<decltype(lexyd::token(Rule{})), Reader> parser(reader);
                 parser.try_parse(reader);
-                end = parser.end;
+                end = parser.end.position();
             }
 
             auto err = lexy::error<Reader, Tag>(begin, end);
@@ -12066,6 +12327,8 @@ struct _look : branch_base
     template <typename Reader>
     struct bp
     {
+        static_assert(lexy::is_char_encoding<typename Reader::encoding>);
+
         typename Reader::iterator begin;
         typename Reader::iterator end;
 
@@ -12118,6 +12381,7 @@ struct _look : branch_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            static_assert(lexy::is_char_encoding<typename Reader::encoding>);
             bp<Reader> impl{};
             if (!impl.try_parse(context.control_block, reader))
             {
@@ -12222,20 +12486,20 @@ struct _find : _recovery_base
             context.on(_ev::recovery_start{}, begin);
             while (true)
             {
-                auto end    = reader.position(); // *before* we've consumed Token/Limit
+                auto end    = reader.current(); // *before* we've consumed Token/Limit
                 auto result = matcher::try_match(reader);
                 if (result == 0)
                 {
-                    context.on(_ev::token{}, lexy::error_token_kind, begin, end);
-                    context.on(_ev::recovery_finish{}, end);
-                    reader.set_position(end); // reset to before the token
+                    context.on(_ev::token{}, lexy::error_token_kind, begin, end.position());
+                    context.on(_ev::recovery_finish{}, end.position());
+                    reader.reset(end); // reset to before the token
                     return NextParser::parse(context, reader, LEXY_FWD(args)...);
                 }
                 else if (result == 1 || reader.peek() == Reader::encoding::eof())
                 {
-                    context.on(_ev::token{}, lexy::error_token_kind, begin, end);
-                    context.on(_ev::recovery_cancel{}, end);
-                    reader.set_position(end); // reset to before the limit
+                    context.on(_ev::token{}, lexy::error_token_kind, begin, end.position());
+                    context.on(_ev::recovery_cancel{}, end.position());
+                    reader.reset(end); // reset to before the limit
                     return false;
                 }
                 else
@@ -13180,18 +13444,17 @@ struct _b : token_base<_b<N, Predicate>>
     template <typename Reader, std::size_t... Idx>
     struct tp<Reader, lexy::_detail::index_sequence<Idx...>>
     {
-        typename Reader::iterator end;
+        static_assert(lexy::is_byte_encoding<typename Reader::encoding>);
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr bool try_parse(Reader reader)
         {
-            static_assert(std::is_same_v<typename Reader::encoding, lexy::byte_encoding>);
-
             // Bump N times.
             auto result
                 = ((_match(reader.peek()) ? (reader.bump(), true) : ((void)Idx, false)) && ...);
-            end = reader.position();
+            end = reader.current();
             return result;
         }
 
@@ -13200,7 +13463,7 @@ struct _b : token_base<_b<N, Predicate>>
         {
             constexpr auto name
                 = std::is_void_v<Predicate> ? "byte" : lexy::_detail::type_name<Predicate>();
-            auto err = lexy::error<Reader, lexy::expected_char_class>(end, name);
+            auto err = lexy::error<Reader, lexy::expected_char_class>(end.position(), name);
             context.on(_ev::error{}, err);
         }
     };
@@ -13307,7 +13570,8 @@ struct _pb : branch_base
     template <typename Reader>
     struct bp
     {
-        typename Reader::iterator end;
+        static_assert(lexy::is_byte_encoding<typename Reader::encoding>);
+        typename Reader::marker end;
 
         constexpr auto try_parse(const void*, const Reader& reader)
         {
@@ -13325,10 +13589,10 @@ struct _pb : branch_base
         LEXY_PARSER_FUNC auto finish(Context& context, Reader& reader, Args&&... args)
         {
             auto begin = reader.position();
-            context.on(_ev::token{}, lexy::any_token_kind, begin, end);
-            reader.set_position(end);
+            context.on(_ev::token{}, lexy::any_token_kind, begin, end.position());
+            reader.reset(end);
 
-            _validate(context, reader, begin, end);
+            _validate(context, reader, begin, end.position());
             return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
                                                                        LEXY_FWD(args)...);
         }
@@ -13340,6 +13604,7 @@ struct _pb : branch_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            static_assert(lexy::is_byte_encoding<typename Reader::encoding>);
             auto begin = reader.position();
             if (!_b<N, void>::token_parse(context, reader))
                 return false;
@@ -13463,7 +13728,8 @@ struct _bint : branch_base
     template <typename Reader>
     struct bp
     {
-        typename Reader::iterator end;
+        static_assert(lexy::is_byte_encoding<typename Reader::encoding>);
+        typename Reader::marker end;
 
         constexpr auto try_parse(const void*, const Reader& reader)
         {
@@ -13481,10 +13747,11 @@ struct _bint : branch_base
         LEXY_PARSER_FUNC auto finish(Context& context, Reader& reader, Args&&... args)
         {
             auto begin = reader.position();
-            context.on(_ev::token{}, _rule{}, begin, end);
-            reader.set_position(end);
+            context.on(_ev::token{}, _rule{}, begin, end.position());
+            reader.reset(end);
 
-            return _pc<NextParser>::parse(context, reader, begin, end, LEXY_FWD(args)...);
+            return _pc<NextParser>::parse(context, reader, begin, end.position(),
+                                          LEXY_FWD(args)...);
         }
     };
 
@@ -13494,6 +13761,7 @@ struct _bint : branch_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            static_assert(lexy::is_byte_encoding<typename Reader::encoding>);
             auto begin = reader.position();
             if (!_rule::token_parse(context, reader))
                 return false;
@@ -13551,7 +13819,7 @@ struct _cap : _copy_base<Token>
     template <typename Reader>
     struct bp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
         constexpr auto try_parse(const void*, const Reader& reader)
         {
@@ -13570,12 +13838,12 @@ struct _cap : _copy_base<Token>
         {
             auto begin = reader.position();
 
-            context.on(_ev::token{}, Token{}, begin, end);
-            reader.set_position(end);
+            context.on(_ev::token{}, Token{}, begin, end.position());
+            reader.reset(end);
 
             using continuation = lexy::whitespace_parser<Context, NextParser>;
             return continuation::parse(context, reader, LEXY_FWD(args)...,
-                                       lexy::lexeme<Reader>(begin, end));
+                                       lexy::lexeme<Reader>(begin, end.position()));
         }
     };
 
@@ -13723,10 +13991,10 @@ struct _cfl : token_base<_cfl<Literal, CaseFolding>>, _lit_base
     struct tp
     {
         lexy::token_parser_for<Literal, CaseFolding<Reader>> impl;
-        typename Reader::iterator                            end;
+        typename Reader::marker                              end;
 
         constexpr explicit tp(const Reader& reader)
-        : impl(CaseFolding<Reader>{reader}), end(reader.position())
+        : impl(CaseFolding<Reader>{reader}), end(reader.current())
         {}
 
         constexpr bool try_parse(Reader _reader)
@@ -13762,6 +14030,7 @@ struct _acfr // ascii case folding reader
 
     using encoding = typename Reader::encoding;
     using iterator = typename Reader::iterator;
+    using marker   = typename Reader::marker;
 
     constexpr auto peek() const -> typename encoding::int_type
     {
@@ -13782,9 +14051,13 @@ struct _acfr // ascii case folding reader
         return _impl.position();
     }
 
-    constexpr void set_position(iterator new_pos)
+    constexpr marker current() const noexcept
     {
-        _impl.set_position(new_pos);
+        return _impl.current();
+    }
+    constexpr void reset(marker m) noexcept
+    {
+        _impl.reset(m);
     }
 };
 } // namespace lexy
@@ -13824,6 +14097,7 @@ struct _sucfr32 // simple unicode case folding reader, UTF-32
 
     using encoding = typename Reader::encoding;
     using iterator = typename Reader::iterator;
+    using marker   = typename Reader::marker;
 
     constexpr auto peek() const -> typename encoding::int_type
     {
@@ -13841,9 +14115,13 @@ struct _sucfr32 // simple unicode case folding reader, UTF-32
         return _impl.position();
     }
 
-    constexpr void set_position(iterator new_pos)
+    constexpr marker current() const noexcept
     {
-        _impl.set_position(new_pos);
+        return _impl.current();
+    }
+    constexpr void reset(marker m) noexcept
+    {
+        _impl.reset(m);
     }
 };
 
@@ -13852,22 +14130,23 @@ struct _sucfrm // simple unicode case folding reader, UTF-8 and UTF-16
 {
     using encoding = typename Reader::encoding;
     using iterator = typename Reader::iterator;
+    using marker   = typename Reader::marker;
 
     Reader                       _impl;
-    typename Reader::iterator    _cur_pos;
+    typename Reader::marker      _cur_pos;
     typename encoding::char_type _buffer[4];
     unsigned char                _buffer_size;
     unsigned char                _buffer_cur;
 
     constexpr explicit _sucfrm(Reader impl)
-    : _impl(impl), _cur_pos(_impl.position()), _buffer{}, _buffer_size(0), _buffer_cur(0)
+    : _impl(impl), _cur_pos(_impl.current()), _buffer{}, _buffer_size(0), _buffer_cur(0)
     {
         _fill();
     }
 
     constexpr void _fill()
     {
-        _cur_pos = _impl.position();
+        _cur_pos = _impl.current();
 
         // We need to read the next code point at this point.
         auto result = lexy::_detail::parse_code_point(_impl);
@@ -13878,13 +14157,13 @@ struct _sucfrm // simple unicode case folding reader, UTF-8 and UTF-16
             _buffer_size = static_cast<unsigned char>(
                 lexy::_detail::encode_code_point<encoding>(folded.value(), _buffer, 4));
             _buffer_cur = 0;
-            _impl.set_position(result.end);
+            _impl.reset(result.end);
         }
         else
         {
             // Fill the buffer with the partial code point.
             _buffer_cur = _buffer_size = 0;
-            while (_impl.position() != result.end)
+            while (_impl.position() != result.end.position())
             {
                 _buffer[_buffer_size] = static_cast<typename encoding::char_type>(_impl.peek());
                 ++_buffer_size;
@@ -13911,22 +14190,23 @@ struct _sucfrm // simple unicode case folding reader, UTF-8 and UTF-16
 
     constexpr iterator position() const
     {
-        // We only report the position at a code point boundary.
+        return current().position();
+    }
+
+    constexpr marker current() const noexcept
+    {
+        // We only report a marker at a code point boundary.
         // This has two consequences:
         // 1. If we don't match a rule, the error token does not include any common start code
-        // units.
-        //    That's actually nice, and makes it unnecessary to handle that situation in the error
-        //    reporting. The only relevant difference is in the error token.
+        //    units. That's actually nice, and makes it unnecessary to handle that situation in the
+        //    error reporting. The only relevant difference is in the error token.
         // 2. If the user wants to match partial code unit sequences, the behavior can become buggy.
         //    However, that's not really something we should worry about.
         return _cur_pos;
     }
-
-    constexpr void set_position(iterator new_pos)
+    constexpr void reset(marker m) noexcept
     {
-        // It's a code point boundary, so reset.
-        _impl.set_position(new_pos);
-        _fill();
+        _impl.reset(m);
     }
 };
 
@@ -14590,12 +14870,14 @@ struct _idp : token_base<_idp<Leading, Trailing>>
     template <typename Reader>
     struct tp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr bool try_parse(Reader reader)
         {
+            static_assert(lexy::is_char_encoding<typename Reader::encoding>);
+
             // Need to match Leading character.
             if (!lexy::try_match_token(Leading{}, reader))
                 return false;
@@ -14615,7 +14897,7 @@ struct _idp : token_base<_idp<Leading, Trailing>>
                     break;
             }
 
-            end = reader.position();
+            end = reader.current();
             return true;
         }
 
@@ -14724,7 +15006,7 @@ struct _id : branch_base
     template <typename Reader>
     struct bp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
         constexpr bool try_parse(const void*, const Reader& reader)
         {
@@ -14735,7 +15017,8 @@ struct _id : branch_base
             end = parser.end;
 
             // We only succeed if it's not a reserved identifier.
-            [[maybe_unused]] auto input = lexy::partial_input(reader, reader.position(), end);
+            [[maybe_unused]] auto input
+                = lexy::partial_input(reader, reader.position(), end.position());
             return !(ReservedPredicate::is_reserved(input) || ...);
         }
 
@@ -14748,12 +15031,12 @@ struct _id : branch_base
         {
             auto begin = reader.position();
 
-            context.on(_ev::token{}, lexy::identifier_token_kind, begin, end);
-            reader.set_position(end);
+            context.on(_ev::token{}, lexy::identifier_token_kind, begin, end.position());
+            reader.reset(end);
 
             using continuation = lexy::whitespace_parser<Context, NextParser>;
             return continuation::parse(context, reader, LEXY_FWD(args)...,
-                                       lexy::lexeme<Reader>(begin, end));
+                                       lexy::lexeme<Reader>(begin, end.position()));
         }
     };
 
@@ -14895,16 +15178,16 @@ struct _kw : token_base<_kw<Id, CharT, C...>>, _lit_base
     template <typename Reader>
     struct tp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr bool try_parse(Reader reader)
         {
             // Need to match the literal.
             if (!lexy::_detail::match_literal<0, CharT, C...>(reader))
                 return false;
-            end = reader.position();
+            end = reader.current();
 
             // To qualify as a keyword, and not just the prefix of an identifier,
             // we must not have a trailing identifier character.
@@ -15029,7 +15312,7 @@ struct _ctx_irem : branch_base
     template <typename Reader>
     struct bp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
         template <typename ControlBlock>
         constexpr bool try_parse(const ControlBlock* cb, const Reader& reader)
@@ -15041,7 +15324,7 @@ struct _ctx_irem : branch_base
             end = parser.end;
 
             // The two lexemes need to be equal.
-            auto lexeme = lexy::lexeme<Reader>(reader.position(), end);
+            auto lexeme = lexy::lexeme<Reader>(reader.position(), end.position());
             return lexy::_detail::equal_lexemes(_ctx_id<Id, Reader>::get(cb), lexeme);
         }
 
@@ -15053,8 +15336,9 @@ struct _ctx_irem : branch_base
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             // Finish parsing the token.
-            context.on(_ev::token{}, lexy::identifier_token_kind, reader.position(), end);
-            reader.set_position(end);
+            context.on(_ev::token{}, lexy::identifier_token_kind, reader.position(),
+                       end.position());
+            reader.reset(end);
             return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
                                                                        LEXY_FWD(args)...);
         }
@@ -15412,7 +15696,8 @@ struct _sym : branch_base
     template <typename Reader>
     struct bp
     {
-        typename Reader::iterator end;
+        static_assert(lexy::is_char_encoding<typename Reader::encoding>);
+        typename Reader::marker end;
         typename LEXY_DECAY_DECLTYPE(Table)::key_index symbol;
 
         constexpr auto value() const
@@ -15430,7 +15715,7 @@ struct _sym : branch_base
             end = parser.end;
 
             // Check whether this is a symbol.
-            auto content = lexy::partial_input(reader, end);
+            auto content = lexy::partial_input(reader, end.position());
             symbol       = Table.parse(content);
 
             // Only succeed if it is a symbol.
@@ -15445,8 +15730,8 @@ struct _sym : branch_base
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             // We need to consume and report the token.
-            context.on(_ev::token{}, Token{}, reader.position(), end);
-            reader.set_position(end);
+            context.on(_ev::token{}, Token{}, reader.position(), end.position());
+            reader.reset(end);
 
             // And continue parsing with the symbol value after whitespace skipping.
             using continuation = lexy::whitespace_parser<Context, NextParser>;
@@ -15484,6 +15769,7 @@ struct _sym : branch_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            static_assert(lexy::is_char_encoding<typename Reader::encoding>);
             // Capture the token and continue with special continuation.
             return lexy::parser_for<_cap<Token>, _cont<Args...>>::parse(context, reader,
                                                                         LEXY_FWD(args)...);
@@ -15504,8 +15790,9 @@ struct _sym<Table, _idp<L, T>, Tag> : branch_base
     template <typename Reader>
     struct bp
     {
+        static_assert(lexy::is_char_encoding<typename Reader::encoding>);
         typename LEXY_DECAY_DECLTYPE(Table)::key_index symbol;
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
         constexpr auto value() const
         {
@@ -15518,7 +15805,7 @@ struct _sym<Table, _idp<L, T>, Tag> : branch_base
             symbol = Table.try_parse(reader);
             if (!symbol)
                 return false;
-            end = reader.position();
+            end = reader.current();
 
             // We had a symbol, but it must not be the prefix of a valid identifier.
             return !lexy::try_match_token(T{}, reader);
@@ -15532,8 +15819,8 @@ struct _sym<Table, _idp<L, T>, Tag> : branch_base
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             // We need to consume and report the identifier pattern.
-            context.on(_ev::token{}, _idp<L, T>{}, reader.position(), end);
-            reader.set_position(end);
+            context.on(_ev::token{}, _idp<L, T>{}, reader.position(), end.position());
+            reader.reset(end);
 
             // And continue parsing with the symbol value after whitespace skipping.
             using continuation = lexy::whitespace_parser<Context, NextParser>;
@@ -15547,6 +15834,7 @@ struct _sym<Table, _idp<L, T>, Tag> : branch_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            static_assert(lexy::is_char_encoding<typename Reader::encoding>);
             auto begin = reader.position();
 
             // Try to parse a symbol that is not the prefix of an identifier.
@@ -15571,9 +15859,9 @@ struct _sym<Table, _idp<L, T>, Tag> : branch_base
             else
             {
                 // We need to consume and report the identifier pattern.
-                auto end = symbol_reader.position();
-                context.on(_ev::token{}, _idp<L, T>{}, begin, end);
-                reader.set_position(end);
+                auto end = symbol_reader.current();
+                context.on(_ev::token{}, _idp<L, T>{}, begin, end.position());
+                reader.reset(end);
 
                 // And continue parsing with the symbol value after whitespace skipping.
                 using continuation = lexy::whitespace_parser<Context, NextParser>;
@@ -15593,8 +15881,9 @@ struct _sym<Table, void, Tag> : branch_base
     template <typename Reader>
     struct bp
     {
+        static_assert(lexy::is_char_encoding<typename Reader::encoding>);
         typename LEXY_DECAY_DECLTYPE(Table)::key_index symbol;
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
         constexpr auto value() const
         {
@@ -15605,7 +15894,7 @@ struct _sym<Table, void, Tag> : branch_base
         {
             // Try to parse a symbol.
             symbol = Table.try_parse(reader);
-            end    = reader.position();
+            end    = reader.current();
 
             // Only succeed if it is a symbol.
             return static_cast<bool>(symbol);
@@ -15619,8 +15908,9 @@ struct _sym<Table, void, Tag> : branch_base
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             // We need to consume and report the token.
-            context.on(_ev::token{}, lexy::identifier_token_kind, reader.position(), end);
-            reader.set_position(end);
+            context.on(_ev::token{}, lexy::identifier_token_kind, reader.position(),
+                       end.position());
+            reader.reset(end);
 
             // And continue parsing with the symbol value after whitespace skipping.
             using continuation = lexy::whitespace_parser<Context, NextParser>;
@@ -15634,6 +15924,7 @@ struct _sym<Table, void, Tag> : branch_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            static_assert(lexy::is_char_encoding<typename Reader::encoding>);
             bp<Reader> impl{};
             if (impl.try_parse(context.control_block, reader))
                 return impl.template finish<NextParser>(context, reader, LEXY_FWD(args)...);
@@ -15778,12 +16069,33 @@ struct _del_chars
         else if constexpr (!std::is_same_v<decltype(CharClass::char_class_match_cp(char32_t())),
                                            std::false_type>)
         {
-            // Try to match any code point in default_encoding or byte_encoding.
-            if constexpr (std::is_same_v<encoding, lexy::default_encoding> //
-                          || std::is_same_v<encoding, lexy::byte_encoding>)
+            if constexpr (lexy::is_unicode_encoding<encoding>)
+            {
+                static_assert(CharClass::char_class_unicode(),
+                              "cannot use this character class with Unicode encoding");
+
+                auto result = lexy::_detail::parse_code_point(reader);
+                if (result.error == lexy::_detail::cp_error::success
+                    && CharClass::char_class_match_cp(result.cp))
+                {
+                    reader.reset(result.end);
+                }
+                else
+                {
+                    finish(context, sink, reader.position());
+
+                    auto recover_begin = reader.position();
+                    if (recover_begin == result.end.position())
+                        reader.bump();
+                    else
+                        reader.reset(result.end);
+                    _recover(context, recover_begin, reader.position());
+                }
+            }
+            else
             {
                 static_assert(!CharClass::char_class_unicode(),
-                              "cannot use this character class with default/byte_encoding");
+                              "cannot use this character class with non-Unicode char encoding");
                 LEXY_ASSERT(reader.peek() != encoding::eof(),
                             "EOF should be checked before calling this");
 
@@ -15794,30 +16106,6 @@ struct _del_chars
                 if (!CharClass::char_class_match_cp(cp))
                 {
                     finish(context, sink, recover_begin);
-                    _recover(context, recover_begin, reader.position());
-                }
-            }
-            // Otherwise, try to match Unicode characters.
-            else
-            {
-                static_assert(CharClass::char_class_unicode(),
-                              "cannot use this character class with Unicode encoding");
-
-                auto result = lexy::_detail::parse_code_point(reader);
-                if (result.error == lexy::_detail::cp_error::success
-                    && CharClass::char_class_match_cp(result.cp))
-                {
-                    reader.set_position(result.end);
-                }
-                else
-                {
-                    finish(context, sink, reader.position());
-
-                    auto recover_begin = reader.position();
-                    if (recover_begin == result.end)
-                        reader.bump();
-                    else
-                        reader.set_position(result.end);
                     _recover(context, recover_begin, reader.position());
                 }
             }
@@ -15926,6 +16214,7 @@ struct _del : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
+            static_assert(lexy::is_char_encoding<typename Reader::encoding>);
             auto sink = context.value_callback().sink();
 
             // Parse characters until we have the closing delimiter.
@@ -16496,24 +16785,27 @@ struct _digits_st : token_base<_digits_st<Base, Sep>>
     template <typename Reader>
     struct tp
     {
-        typename Reader::iterator end;
-        bool                      forbidden_leading_zero;
+        typename Reader::marker end;
+        bool                    forbidden_leading_zero;
 
         constexpr explicit tp(const Reader& reader)
-        : end(reader.position()), forbidden_leading_zero(false)
+        : end(reader.current()), forbidden_leading_zero(false)
         {}
 
         constexpr bool try_parse(Reader reader)
         {
             using char_type = typename Reader::encoding::char_type;
-            auto begin      = reader.position();
+            auto begin      = reader.current();
             auto result     = _match_digits_sep<Base, Sep>(reader);
-            end             = reader.position();
+            end             = reader.current();
 
-            if (result && lexy::_detail::next(begin) != end
-                && *begin == lexy::_detail::transcode_char<char_type>('0'))
+            if (result && lexy::_detail::next(begin.position()) != end.position()
+                && *begin.position() == lexy::_detail::transcode_char<char_type>('0'))
             {
-                end                    = lexy::_detail::next(begin);
+                reader.reset(begin);
+                reader.bump();
+                end = reader.current();
+
                 forbidden_leading_zero = true;
                 return false;
             }
@@ -16526,14 +16818,14 @@ struct _digits_st : token_base<_digits_st<Base, Sep>>
         {
             if (forbidden_leading_zero)
             {
-                auto err
-                    = lexy::error<Reader, lexy::forbidden_leading_zero>(reader.position(), end);
+                auto err = lexy::error<Reader, lexy::forbidden_leading_zero>(reader.position(),
+                                                                             end.position());
                 context.on(_ev::error{}, err);
             }
             else
             {
-                auto err
-                    = lexy::error<Reader, lexy::expected_char_class>(end, Base::char_class_name());
+                auto err = lexy::error<Reader, lexy::expected_char_class>(end.position(),
+                                                                          Base::char_class_name());
                 context.on(_ev::error{}, err);
             }
         }
@@ -16546,21 +16838,22 @@ struct _digits_s : token_base<_digits_s<Base, Sep>>
     template <typename Reader>
     struct tp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr bool try_parse(Reader reader)
         {
             auto result = _match_digits_sep<Base, Sep>(reader);
-            end         = reader.position();
+            end         = reader.current();
             return result;
         }
 
         template <typename Context>
         constexpr void report_error(Context& context, const Reader&)
         {
-            auto err = lexy::error<Reader, lexy::expected_char_class>(end, Base::char_class_name());
+            auto err = lexy::error<Reader, lexy::expected_char_class>(end.position(),
+                                                                      Base::char_class_name());
             context.on(_ev::error{}, err);
         }
     };
@@ -16577,24 +16870,27 @@ struct _digits_t : token_base<_digits_t<Base>>
     template <typename Reader>
     struct tp
     {
-        typename Reader::iterator end;
-        bool                      forbidden_leading_zero;
+        typename Reader::marker end;
+        bool                    forbidden_leading_zero;
 
         constexpr explicit tp(const Reader& reader)
-        : end(reader.position()), forbidden_leading_zero(false)
+        : end(reader.current()), forbidden_leading_zero(false)
         {}
 
         constexpr bool try_parse(Reader reader)
         {
             using char_type = typename Reader::encoding::char_type;
-            auto begin      = reader.position();
+            auto begin      = reader.current();
             auto result     = _match_digits<Base>(reader);
-            end             = reader.position();
+            end             = reader.current();
 
-            if (result && lexy::_detail::next(begin) != end
-                && *begin == lexy::_detail::transcode_char<char_type>('0'))
+            if (result && lexy::_detail::next(begin.position()) != end.position()
+                && *begin.position() == lexy::_detail::transcode_char<char_type>('0'))
             {
-                end                    = lexy::_detail::next(begin);
+                reader.reset(begin);
+                reader.bump();
+                end = reader.current();
+
                 forbidden_leading_zero = true;
                 return false;
             }
@@ -16608,7 +16904,7 @@ struct _digits_t : token_base<_digits_t<Base>>
             if (forbidden_leading_zero)
             {
                 auto err = lexy::error<Reader, lexy::forbidden_leading_zero>(reader.position(),
-                                                                             this->end);
+                                                                             end.position());
                 context.on(_ev::error{}, err);
             }
             else
@@ -16634,14 +16930,14 @@ struct _digits : token_base<_digits<Base>>
     template <typename Reader>
     struct tp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr bool try_parse(Reader reader)
         {
             auto result = _match_digits<Base>(reader);
-            end         = reader.position();
+            end         = reader.current();
             return result;
         }
 
@@ -16698,16 +16994,16 @@ struct _ndigits_s : token_base<_ndigits_s<N, Base, Sep>>
     template <typename Reader, std::size_t... Idx>
     struct tp<Reader, lexy::_detail::index_sequence<Idx...>>
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr bool try_parse(Reader reader)
         {
             // Match the Base one time.
             if (!lexy::try_match_token(digit<Base>, reader))
             {
-                end = reader.position();
+                end = reader.current();
                 return false;
             }
 
@@ -16715,14 +17011,15 @@ struct _ndigits_s : token_base<_ndigits_s<N, Base, Sep>>
             auto success = (((void)Idx, lexy::try_match_token(Sep{}, reader),
                              lexy::try_match_token(digit<Base>, reader))
                             && ...);
-            end          = reader.position();
+            end          = reader.current();
             return success;
         }
 
         template <typename Context>
         constexpr void report_error(Context& context, const Reader&)
         {
-            auto err = lexy::error<Reader, lexy::expected_char_class>(end, Base::char_class_name());
+            auto err = lexy::error<Reader, lexy::expected_char_class>(end.position(),
+                                                                      Base::char_class_name());
             context.on(_ev::error{}, err);
         }
     };
@@ -16738,22 +17035,23 @@ struct _ndigits : token_base<_ndigits<N, Base>>
     template <typename Reader, std::size_t... Idx>
     struct tp<Reader, lexy::_detail::index_sequence<Idx...>>
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr bool try_parse(Reader reader)
         {
             // Match the Base N times.
             auto success = (((void)Idx, lexy::try_match_token(digit<Base>, reader)) && ...);
-            end          = reader.position();
+            end          = reader.current();
             return success;
         }
 
         template <typename Context>
         constexpr void report_error(Context& context, const Reader&)
         {
-            auto err = lexy::error<Reader, lexy::expected_char_class>(end, Base::char_class_name());
+            auto err = lexy::error<Reader, lexy::expected_char_class>(end.position(),
+                                                                      Base::char_class_name());
             context.on(_ev::error{}, err);
         }
     };
@@ -17013,8 +17311,8 @@ struct op_lit_list
 template <typename Reader>
 struct parsed_operator
 {
-    typename Reader::iterator pos;
-    std::size_t               idx;
+    typename Reader::marker cur;
+    std::size_t             idx;
 };
 
 template <typename OpList, typename Reader>
@@ -17023,7 +17321,7 @@ constexpr auto parse_operator(Reader& reader)
     using encoding   = typename Reader::encoding;
     using op_matcher = lexy::_detail::lit_trie_matcher<OpList::template trie<encoding>, 0>;
 
-    auto begin = reader.position();
+    auto begin = reader.current();
     auto op    = op_matcher::try_match(reader);
     return parsed_operator<Reader>{begin, op};
 }
@@ -17050,7 +17348,8 @@ struct _op : branch_base
                                            lexy::_detail::parsed_operator<Reader> op,
                                            Args&&... args)
     {
-        context.on(_ev::token{}, typename Literal::token_type{}, op.pos, reader.position());
+        context.on(_ev::token{}, typename Literal::token_type{}, op.cur.position(),
+                   reader.position());
 
         using continuation
             = lexy::whitespace_parser<Context, lexy::parser_for<_seq_impl<R...>, NextParser>>;
@@ -17061,7 +17360,8 @@ struct _op : branch_base
             return continuation::parse(context, reader, LEXY_FWD(args)...,
                                        op_tag_type(*context.control_block->parse_state, op.pos));
         else if constexpr (lexy::_detail::is_detected<_detect_op_tag_ctor, op_tag_type, Reader>)
-            return continuation::parse(context, reader, LEXY_FWD(args)..., op_tag_type(op.pos));
+            return continuation::parse(context, reader, LEXY_FWD(args)...,
+                                       op_tag_type(op.cur.position()));
         else
             return continuation::parse(context, reader, LEXY_FWD(args)..., op_tag_type{});
     }
@@ -17202,12 +17502,12 @@ struct _opc : branch_base
     struct bp
     {
         lexy::_detail::parsed_operator<Reader> op;
-        typename Reader::iterator              end;
+        typename Reader::marker                end;
 
         constexpr auto try_parse(const void*, Reader reader)
         {
             op  = lexy::_detail::parse_operator<op_literals>(reader);
-            end = reader.position();
+            end = reader.current();
             return op.idx < op_literals::size;
         }
 
@@ -17218,7 +17518,7 @@ struct _opc : branch_base
         template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
-            reader.set_position(end);
+            reader.reset(end);
             return op_finish<NextParser>(context, reader, op, LEXY_FWD(args)...);
         }
     };
@@ -17232,7 +17532,7 @@ struct _opc : branch_base
             bp<Reader> impl{};
             if (!impl.try_parse(context.control_block, reader))
             {
-                auto err = lexy::error<Reader, lexy::expected_literal_set>(impl.op.pos);
+                auto err = lexy::error<Reader, lexy::expected_literal_set>(impl.op.cur.position());
                 context.on(_ev::error{}, err);
                 return false;
             }
@@ -17456,7 +17756,7 @@ struct operation_list
         (void)((cur_idx <= op.idx && op.idx < cur_idx + op_of<Operations>::op_literals::size
                     ? (result
                        = Continuation<Operations>::parse(context, reader,
-                                                         parsed_operator<Reader>{op.pos,
+                                                         parsed_operator<Reader>{op.cur,
                                                                                  op.idx - cur_idx},
                                                          LEXY_FWD(args)...),
                        true)
@@ -17568,7 +17868,7 @@ struct _expr : rule_base
                         if (op.idx >= op_rule::op_literals::size)
                         {
                             // The list ends at this point.
-                            reader.set_position(op.pos);
+                            reader.reset(op.cur);
                             break;
                         }
 
@@ -17640,10 +17940,11 @@ struct _expr : rule_base
                         if (op.idx < op_rule::op_literals::size)
                         {
                             using tag = typename Context::production::operator_chain_error;
-                            auto err  = lexy::error<Reader, tag>(op.pos, reader.position());
+                            auto err
+                                = lexy::error<Reader, tag>(op.cur.position(), reader.position());
                             context.on(_ev::error{}, err);
                         }
-                        reader.set_position(op.pos);
+                        reader.reset(op.cur);
                     }
                 }
                 else if constexpr (binding_power.is_postfix())
@@ -17675,11 +17976,11 @@ struct _expr : rule_base
             if (state.cur_nesting_level++ >= production::max_operator_nesting)
             {
                 using tag = typename production::operator_nesting_error;
-                auto err  = lexy::error<Reader, tag>(op.pos, reader.position());
+                auto err  = lexy::error<Reader, tag>(op.cur.position(), reader.position());
                 context.on(_ev::error{}, err);
 
                 // We do not recover, to prevent stack overflow.
-                reader.set_position(op.pos);
+                reader.reset(op.cur);
                 return false;
             }
 
@@ -17696,7 +17997,7 @@ struct _expr : rule_base
                 {
                     // Operators can't be grouped.
                     using tag = typename production::operator_group_error;
-                    auto err  = lexy::error<Reader, tag>(op.pos, reader.position());
+                    auto err  = lexy::error<Reader, tag>(op.cur.position(), reader.position());
                     context.on(_ev::error{}, err);
                     // Trivially recover, but don't update group:
                     // let the first one stick.
@@ -17729,11 +18030,11 @@ struct _expr : rule_base
             if (op.idx >= op_list::ops::size)
             {
                 // We don't have a prefix operator, so it must be an atom.
-                reader.set_position(op.pos);
+                reader.reset(op.cur);
                 return atom_parser::parse(context, reader);
             }
 
-            auto start_event = context.on(_ev::operation_chain_start{}, op.pos);
+            auto start_event = context.on(_ev::operation_chain_start{}, op.cur.position());
             auto result      = op_list::template apply<_continuation>(context, reader, op, state);
             context.on(_ev::operation_chain_finish{}, LEXY_MOV(start_event), reader.position());
             return result;
@@ -17766,7 +18067,7 @@ struct _expr : rule_base
                 auto op = parse_operator<typename op_list::ops>(reader);
                 if (op.idx >= op_list::ops::size)
                 {
-                    reader.set_position(op.pos);
+                    reader.reset(op.cur);
                     break;
                 }
 
@@ -18049,11 +18350,11 @@ struct _nf : token_base<_nf<Literal, CharClass>>, _lit_base
     struct tp
     {
         lexy::token_parser_for<Literal, Reader> impl;
-        typename Reader::iterator               end;
+        typename Reader::marker                 end;
         bool                                    literal_success;
 
         constexpr explicit tp(const Reader& reader)
-        : impl(reader), end(reader.position()), literal_success(false)
+        : impl(reader), end(reader.current()), literal_success(false)
         {}
 
         constexpr bool try_parse(Reader reader)
@@ -18067,7 +18368,7 @@ struct _nf : token_base<_nf<Literal, CharClass>>, _lit_base
             literal_success = true;
 
             // To match, we must not match the char class now.
-            reader.set_position(end);
+            reader.reset(end);
             if constexpr (std::is_void_v<lit_case_folding>)
             {
                 return !lexy::try_match_token(CharClass{}, reader);
@@ -18088,7 +18389,8 @@ struct _nf : token_base<_nf<Literal, CharClass>>, _lit_base
             }
             else
             {
-                auto err = lexy::error<Reader, lexy::follow_restriction>(end, end);
+                auto err
+                    = lexy::error<Reader, lexy::follow_restriction>(end.position(), end.position());
                 context.on(_ev::error{}, err);
             }
         }
@@ -18585,7 +18887,7 @@ struct _int : _copy_base<Token>
     template <typename Reader>
     struct bp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
         constexpr auto try_parse(const void*, const Reader& reader)
         {
@@ -18603,10 +18905,11 @@ struct _int : _copy_base<Token>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
             auto begin = reader.position();
-            context.on(_ev::token{}, Token{}, begin, end);
-            reader.set_position(end);
+            context.on(_ev::token{}, Token{}, begin, end.position());
+            reader.reset(end);
 
-            return _pc<NextParser>::parse(context, reader, begin, end, LEXY_FWD(args)...);
+            return _pc<NextParser>::parse(context, reader, begin, end.position(),
+                                          LEXY_FWD(args)...);
         }
     };
 
@@ -18619,17 +18922,19 @@ struct _int : _copy_base<Token>
             auto begin = reader.position();
             if (lexy::token_parser_for<Token, Reader> parser(reader); parser.try_parse(reader))
             {
-                context.on(_ev::token{}, typename Token::token_type{}, begin, parser.end);
-                reader.set_position(parser.end);
+                context.on(_ev::token{}, typename Token::token_type{}, begin,
+                           parser.end.position());
+                reader.reset(parser.end);
             }
             else
             {
                 parser.report_error(context, reader);
-                reader.set_position(parser.end);
+                reader.reset(parser.end);
 
                 // To recover we try and skip additional digits.
                 while (lexy::try_match_token(digit<typename IntParser::base>, reader))
-                {}
+                {
+                }
 
                 auto recovery_end = reader.position();
                 if (begin == recovery_end)
@@ -19905,7 +20210,7 @@ struct _peek : branch_base
     struct bp
     {
         typename Reader::iterator begin;
-        typename Reader::iterator end;
+        typename Reader::marker   end;
 
         constexpr bool try_parse(const void*, Reader reader)
         {
@@ -19922,13 +20227,13 @@ struct _peek : branch_base
         template <typename Context>
         constexpr void cancel(Context& context)
         {
-            context.on(_ev::backtracked{}, begin, end);
+            context.on(_ev::backtracked{}, begin, end.position());
         }
 
         template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
-            context.on(_ev::backtracked{}, begin, end);
+            context.on(_ev::backtracked{}, begin, end.position());
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -19944,13 +20249,13 @@ struct _peek : branch_base
             {
                 // Report that we've failed.
                 using tag = lexy::_detail::type_or<Tag, lexy::peek_failure>;
-                auto err  = lexy::error<Reader, tag>(impl.begin, impl.end);
+                auto err  = lexy::error<Reader, tag>(impl.begin, impl.end.position());
                 context.on(_ev::error{}, err);
 
                 // But recover immediately, as we wouldn't have consumed anything either way.
             }
 
-            context.on(_ev::backtracked{}, impl.begin, impl.end);
+            context.on(_ev::backtracked{}, impl.begin, impl.end.position());
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -19966,7 +20271,7 @@ struct _peekn : branch_base
     struct bp
     {
         typename Reader::iterator begin;
-        typename Reader::iterator end;
+        typename Reader::marker   end;
 
         constexpr bool try_parse(const void*, Reader reader)
         {
@@ -19983,13 +20288,13 @@ struct _peekn : branch_base
         template <typename Context>
         constexpr void cancel(Context& context)
         {
-            context.on(_ev::backtracked{}, begin, end);
+            context.on(_ev::backtracked{}, begin, end.position());
         }
 
         template <typename NextParser, typename Context, typename... Args>
         LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
         {
-            context.on(_ev::backtracked{}, begin, end);
+            context.on(_ev::backtracked{}, begin, end.position());
             return NextParser::parse(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -20005,20 +20310,20 @@ struct _peekn : branch_base
             {
                 // Report that we've failed.
                 using tag = lexy::_detail::type_or<Tag, lexy::unexpected>;
-                auto err  = lexy::error<Reader, tag>(impl.begin, impl.end);
+                auto err  = lexy::error<Reader, tag>(impl.begin, impl.end.position());
                 context.on(_ev::error{}, err);
 
                 // And recover by consuming the input.
                 context.on(_ev::recovery_start{}, impl.begin);
-                context.on(_ev::token{}, lexy::error_token_kind, impl.begin, impl.end);
-                context.on(_ev::recovery_finish{}, impl.end);
+                context.on(_ev::token{}, lexy::error_token_kind, impl.begin, impl.end.position());
+                context.on(_ev::recovery_finish{}, impl.end.position());
 
-                reader.set_position(impl.end);
+                reader.reset(impl.end);
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
             }
             else
             {
-                context.on(_ev::backtracked{}, impl.begin, impl.end);
+                context.on(_ev::backtracked{}, impl.begin, impl.end.position());
                 return NextParser::parse(context, reader, LEXY_FWD(args)...);
             }
         }
@@ -20868,6 +21173,10 @@ public:
     {
         return _reader.position();
     }
+    constexpr auto current() const noexcept -> typename Reader::marker
+    {
+        return _reader.current();
+    }
 
     constexpr auto remaining_input() const noexcept
     {
@@ -21165,7 +21474,7 @@ struct _scan : rule_base
                 else
                     return Context::production::scan(scanner, LEXY_FWD(args)...);
             }();
-            reader.set_position(scanner.position());
+            reader.reset(scanner.current());
             if (!result)
                 return false;
 
@@ -21968,9 +22277,9 @@ struct _until_eof : token_base<_until_eof<Condition>, unconditional_branch_base>
     template <typename Reader>
     struct tp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr std::true_type try_parse(Reader reader)
         {
@@ -21993,7 +22302,7 @@ struct _until_eof : token_base<_until_eof<Condition>, unconditional_branch_base>
                 reader.bump();
             }
 
-            end = reader.position();
+            end = reader.current();
             return {};
         }
     };
@@ -22005,9 +22314,9 @@ struct _until : token_base<_until<Condition>>
     template <typename Reader>
     struct tp
     {
-        typename Reader::iterator end;
+        typename Reader::marker end;
 
-        constexpr explicit tp(const Reader& reader) : end(reader.position()) {}
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
 
         constexpr bool try_parse(Reader reader)
         {
@@ -22019,7 +22328,7 @@ struct _until : token_base<_until<Condition>>
                 if (lexy::try_match_token(Condition{}, reader))
                 {
                     // It did match, we're done at that end.
-                    end = reader.position();
+                    end = reader.current();
                     return true;
                 }
 
@@ -22029,7 +22338,7 @@ struct _until : token_base<_until<Condition>>
                 if (reader.peek() == Reader::encoding::eof())
                 {
                     // It did, so we did not succeed.
-                    end = reader.position();
+                    end = reader.current();
                     return false;
                 }
 
@@ -22046,7 +22355,7 @@ struct _until : token_base<_until<Condition>>
             // We need to trigger the error `Condition` would.
             // As such, we try parsing it, which will report an error.
 
-            reader.set_position(end);
+            reader.reset(end);
             LEXY_ASSERT(reader.peek() == Reader::encoding::eof(),
                         "forgot to set end in try_parse()");
 
@@ -22085,6 +22394,259 @@ constexpr auto token_kind_of<lexy::dsl::_until<Condition>> = lexy::any_token_kin
 #endif // LEXY_DSL_UNTIL_HPP_INCLUDED
 
 
+
+#if LEXY_EXPERIMENTAL
+// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
+// SPDX-License-Identifier: BSL-1.0
+
+#ifndef LEXY_DSL_PARSE_TREE_NODE_HPP_INCLUDED
+#define LEXY_DSL_PARSE_TREE_NODE_HPP_INCLUDED
+
+
+
+
+#if !LEXY_EXPERIMENTAL
+#    error "lexy::dsl::tnode/pnode are experimental"
+#endif
+
+//=== impl ===//
+namespace lexyd
+{
+template <typename Derived>
+struct _n;
+
+template <typename Derived, typename R>
+struct _nr : branch_base
+{
+    template <typename NextParser>
+    struct _cont
+    {
+        template <typename Context, typename ChildReader, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, ChildReader& child_reader,
+                                           bool& rule_succeded, Reader& reader, Args&&... args)
+        {
+            rule_succeded = true;
+
+            if (child_reader.peek() != ChildReader::encoding::eof())
+            {
+                auto begin = child_reader.position();
+                auto end   = reader.position();
+                context.on(_ev::token{}, lexy::error_token_kind, begin, end);
+
+                auto err = lexy::error<Reader, typename Derived::node_end_error>(begin, end);
+                context.on(_ev::error{}, err);
+            }
+
+            return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
+                                                                       LEXY_FWD(args)...);
+        }
+    };
+
+    template <typename NextParser, typename Context, typename Reader, typename... Args>
+    LEXY_PARSER_FUNC static bool _parse_rule(Context& context, Reader& reader,
+                                             typename Reader::marker end, Args&&... args)
+    {
+        auto child_reader = Derived::node_child_reader(reader);
+        reader.reset(end);
+
+        using rule_parser = lexy::parser_for<R, _cont<NextParser>>;
+        if (auto rule_succeded = false;
+            rule_parser::parse(context, child_reader, rule_succeded, reader, LEXY_FWD(args)...))
+        {
+            return true;
+        }
+        else
+        {
+            if (!rule_succeded)
+                // Report an error token for the child span that wasn't able to be parsed.
+                context.on(_ev::token{}, lexy::error_token_kind, child_reader.position(),
+                           end.position());
+            return false;
+        }
+    }
+
+    template <typename Reader>
+    struct bp
+    {
+        typename Reader::marker end;
+
+        constexpr bool try_parse(const void*, const Reader& reader)
+        {
+            lexy::token_parser_for<_n<Derived>, Reader> parser(reader);
+            auto                                        result = parser.try_parse(reader);
+            end                                                = parser.end;
+            return result;
+        }
+
+        template <typename Context>
+        constexpr void cancel(Context&)
+        {}
+
+        template <typename NextParser, typename Context, typename... Args>
+        LEXY_PARSER_FUNC bool finish(Context& context, Reader& reader, Args&&... args)
+        {
+            return _parse_rule<NextParser>(context, reader, end, LEXY_FWD(args)...);
+        }
+    };
+
+    template <typename NextParser>
+    struct p
+    {
+        template <typename Context, typename Reader, typename... Args>
+        LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
+        {
+            lexy::token_parser_for<_n<Derived>, Reader> parser(reader);
+            if (!parser.try_parse(reader))
+            {
+                LEXY_ASSERT(parser.end.position() == reader.position(), "impl should be LL(1)");
+                parser.report_error(context, reader);
+                return false;
+            }
+
+            return _parse_rule<NextParser>(context, reader, parser.end, LEXY_FWD(args)...);
+        }
+    };
+};
+
+template <typename Derived>
+struct _n : token_base<Derived>
+{
+    template <typename Reader>
+    struct tp
+    {
+        typename Reader::marker end;
+
+        constexpr explicit tp(const Reader& reader) : end(reader.current()) {}
+
+        constexpr auto try_parse(Reader reader)
+        {
+            if constexpr (lexy::is_node_encoding<typename Reader::encoding>)
+            {
+                if (!Reader::encoding::match(reader.peek(), Derived::node_kind()))
+                    return false;
+
+                reader.bump();
+                end = reader.current();
+                return true;
+            }
+            else
+            {
+                // This happens when it is used as whitespace, which is inherited while parsing the
+                // token lexeme, we don't match anything in that case.
+                return std::false_type{};
+            }
+        }
+
+        template <typename Context>
+        constexpr void report_error(Context& context, Reader reader)
+        {
+            constexpr auto name = Derived::node_kind_name();
+
+            auto err = lexy::error<Reader, lexy::expected_char_class>(reader.position(), name);
+            context.on(_ev::error{}, err);
+        }
+    };
+
+    template <typename Rule>
+    constexpr auto operator()(Rule) const
+    {
+        return _nr<Derived, Rule>{};
+    }
+};
+} // namespace lexyd
+
+//=== dsl::tnode ===//
+namespace lexy
+{
+struct expected_token_end
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "expected token end";
+    }
+};
+} // namespace lexy
+
+namespace lexyd
+{
+template <auto Kind>
+struct _tn : _n<_tn<Kind>>
+{
+    static LEXY_CONSTEVAL auto node_kind()
+    {
+        return Kind;
+    }
+
+    static LEXY_CONSTEVAL auto node_kind_name()
+    {
+        using lexy::token_kind_name;
+        return token_kind_name(Kind);
+    }
+
+    using node_end_error = lexy::expected_token_end;
+
+    template <typename Reader>
+    static constexpr auto node_child_reader(Reader& reader)
+    {
+        return reader.lexeme_reader();
+    }
+};
+
+template <auto Kind>
+constexpr auto tnode = _tn<Kind>{};
+} // namespace lexyd
+
+namespace lexy
+{
+template <auto Kind>
+constexpr auto token_kind_of<lexy::dsl::_tn<Kind>> = Kind;
+} // namespace lexy
+
+//=== dsl::pnode ===//
+namespace lexy
+{
+struct expected_production_end
+{
+    static LEXY_CONSTEVAL auto name()
+    {
+        return "expected production end";
+    }
+};
+} // namespace lexy
+
+namespace lexyd
+{
+template <typename Production>
+struct _pn : _n<_pn<Production>>
+{
+    static_assert(lexy::is_production<Production>);
+
+    static LEXY_CONSTEVAL auto node_kind()
+    {
+        return Production{};
+    }
+
+    static LEXY_CONSTEVAL auto node_kind_name()
+    {
+        return lexy::production_name<Production>();
+    }
+
+    using node_end_error = lexy::expected_production_end;
+
+    template <typename Reader>
+    static constexpr auto node_child_reader(Reader& reader)
+    {
+        return reader.child_reader();
+    }
+};
+
+template <typename Production>
+constexpr auto pnode = _pn<Production>{};
+} // namespace lexyd
+
+#endif // LEXY_DSL_PARSE_TREE_NODE_HPP_INCLUDED
+
+#endif
 
 #endif // LEXY_DSL_HPP_INCLUDED
 
@@ -22280,6 +22842,16 @@ public:
     using encoding = Encoding;
     using iterator = const typename Encoding::char_type*;
 
+    struct marker
+    {
+        iterator _it;
+
+        constexpr iterator position() const noexcept
+        {
+            return _it;
+        }
+    };
+
     explicit _br(iterator begin) noexcept : _cur(begin) {}
 
     auto peek() const noexcept
@@ -22298,9 +22870,13 @@ public:
         return _cur;
     }
 
-    void set_position(iterator new_pos) noexcept
+    marker current() const noexcept
     {
-        _cur = new_pos;
+        return {_cur};
+    }
+    void reset(marker m) noexcept
+    {
+        _cur = m._it;
     }
 
 private:
@@ -22339,13 +22915,14 @@ namespace lexy
 template <typename Encoding = default_encoding, typename MemoryResource = void>
 class buffer
 {
+    static_assert(lexy::is_char_encoding<Encoding>);
     static constexpr auto _has_sentinel
         = std::is_same_v<typename Encoding::char_type, typename Encoding::int_type>;
 
 public:
     using encoding  = Encoding;
     using char_type = typename encoding::char_type;
-    static_assert(std::is_trivial_v<char_type>);
+    static_assert(std::is_trivially_copyable_v<char_type>);
 
     //=== constructors ===//
     /// Allows the creation of an uninitialized buffer that is then filled by the user.
