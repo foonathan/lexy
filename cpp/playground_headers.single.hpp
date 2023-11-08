@@ -1576,7 +1576,8 @@ public:
     template <typename... Args>
     constexpr return_type operator()(Args&&... args) const
     {
-        if constexpr (lexy::is_callback_with_state_for<_type, ParseState, Args&&...>)
+        if constexpr (lexy::is_callback_with_state_for<_type, ParseState, Args&&...>
+                      && !std::is_void_v<ParseState>)
         {
             return _get_value(_state)[*_state](LEXY_FWD(args)...);
         }
