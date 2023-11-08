@@ -18,11 +18,16 @@
 
 <article id="doc">
     <header>
+        <h1>
         {{ if (isset .Params "header") }}
-        <h1>Header <code>{{ .Params.header }}</code> </h1>
+            Header <code>{{ .Params.header }}</code>
         {{ else }}
-        <h1>{{ .Page.Title }}</h1>
+            {{ .Page.Title }}
         {{ end }}
+        {{ if (index .Params "experimental" | default false) }}
+            <i>{{ (resources.Get "icons/beta.svg").Content | safeHTML }}</i>
+        {{ end }}
+        </h1>
         <nav>
             <a href="{{ .Site.Params.github_src_prefix }}/include/{{ .Params.header }}">
                 {{ (resources.Get "icons/github.svg").Content | safeHTML }} View source

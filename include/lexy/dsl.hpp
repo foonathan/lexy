@@ -40,7 +40,6 @@
 #include <lexy/dsl/operator.hpp>
 #include <lexy/dsl/option.hpp>
 #include <lexy/dsl/parse_as.hpp>
-#include <lexy/dsl/parse_tree_node.hpp>
 #include <lexy/dsl/peek.hpp>
 #include <lexy/dsl/position.hpp>
 #include <lexy/dsl/production.hpp>
@@ -60,6 +59,10 @@
 #include <lexy/dsl/unicode.hpp>
 #include <lexy/dsl/until.hpp>
 #include <lexy/dsl/whitespace.hpp>
+
+#if LEXY_EXPERIMENTAL
+#    include <lexy/dsl/parse_tree_node.hpp>
+#endif
 
 #endif // LEXY_DSL_HPP_INCLUDED
 

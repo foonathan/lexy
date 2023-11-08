@@ -1220,6 +1220,7 @@ private:
 };
 } // namespace lexy
 
+#if LEXY_EXPERIMENTAL
 namespace lexy
 {
 template <typename Reader, typename TokenKind>
@@ -1282,6 +1283,7 @@ struct parse_tree_input_traits<_pt_node<Reader, TokenKind>>
     }
 };
 } // namespace lexy
+#endif
 
 #endif // LEXY_PARSE_TREE_HPP_INCLUDED
 

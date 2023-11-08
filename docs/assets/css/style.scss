@@ -59,12 +59,19 @@ h6 {
 
 a, a svg, button svg {
     color: $link-color;
+    fill: $link-color;
+    stroke: $link-color;
     transition: color ease 0.3s;
 }
-a:hover, a svg:hover, button svg:hover {
+a:hover, button:hover {
     color: $highlight-color;
+    svg {
+        color: $highlight-color;
+        fill: $highlight-color;
+        stroke: $highlight-color;
+    }
 }
-a:focus, a svg:focus, button svg:focus {
+a:focus, button:focus {
     outline: none;
 }
 

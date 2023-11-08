@@ -12,7 +12,7 @@
 
 === New Features
 
-* Add `lexy::parse_tree_input` and `lexy::dsl::tnode`/`lexy::dsl::pnode` to support multi-pass parsing.
+* **Experimental**: Add `lexy::parse_tree_input` and `lexy::dsl::tnode`/`lexy::dsl::pnode` to support multi-pass parsing.
 * Add `lexy::dsl::byte.if_`/`set`/`range`/`ascii` methods to match specific bytes.
 * Add an overload of `fatal_error()` on scanners that allows construction of type-erased generic errors (#134).
 * Add `lexy::buffer::release()` and `lexy::buffer::adopt()` to deconstruct a buffer into its components and re-assemble it later.

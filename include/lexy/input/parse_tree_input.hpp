@@ -9,6 +9,10 @@
 #include <lexy/input/base.hpp>
 #include <lexy/lexeme.hpp>
 
+#if !LEXY_EXPERIMENTAL
+#    error "lexy::parse_tree_input is experimental"
+#endif
+
 namespace lexy
 {
 template <typename Node>

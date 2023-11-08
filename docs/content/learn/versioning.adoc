@@ -26,7 +26,7 @@ We promise:
 We reserve the right to:
 
 * Deprecate existing functionality and remove previously deprecated functionality.
-* Change anything that is not documented.
+* Change anything that is not documented or explicitly marked as experimental (enabled by linking `foonathan::lexy::experimental`).
   In particular, writing custom rules, readers, or parse actions is not guaranteed to work across major releases.
 * Change everything about the extension headers.
 * Change the behavior of rules on invalid input.

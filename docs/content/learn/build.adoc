@@ -28,8 +28,10 @@ It exposes the following targets:
   Link to this library if you want to use advanced Unicode rules that require the Unicode character database.
 `foonathan::lexy::ext` (header-only)::
   Link to this library if you want to use the extension headers in `lexy_ext/`.
+`foonathan::lexy::experimental` (header-only)::
+  Link to this library if you want to use experimental features.
 `foonathan::lexy` (library)::
-  Umbrella target that links to all other targets.
+  Umbrella target that links to all targets except for `foonathan::lexy::experimental`.
 
 A minimal `CMakeLists.txt` that uses lexy can look like this:
 

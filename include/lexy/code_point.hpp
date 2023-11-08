@@ -8,10 +8,6 @@
 #include <lexy/_detail/assert.hpp>
 #include <lexy/_detail/config.hpp>
 
-#ifndef LEXY_HAS_UNICODE_DATABASE
-#    define LEXY_HAS_UNICODE_DATABASE 0
-#endif
-
 #if LEXY_HAS_UNICODE_DATABASE
 #    define LEXY_UNICODE_CONSTEXPR constexpr
 #else

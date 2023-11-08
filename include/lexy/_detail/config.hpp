@@ -17,6 +17,14 @@
 #    endif
 #endif
 
+#ifndef LEXY_HAS_UNICODE_DATABASE
+#    define LEXY_HAS_UNICODE_DATABASE 0
+#endif
+
+#ifndef LEXY_EXPERIMENTAL
+#    define LEXY_EXPERIMENTAL 0
+#endif
+
 //=== utility traits===//
 #define LEXY_MOV(...) static_cast<std::remove_reference_t<decltype(__VA_ARGS__)>&&>(__VA_ARGS__)
 #define LEXY_FWD(...) static_cast<decltype(__VA_ARGS__)>(__VA_ARGS__)

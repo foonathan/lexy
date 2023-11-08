@@ -7,6 +7,10 @@
 #include <lexy/dsl/base.hpp>
 #include <lexy/dsl/token.hpp>
 
+#if !LEXY_EXPERIMENTAL
+#    error "lexy::dsl::tnode/pnode are experimental"
+#endif
+
 //=== impl ===//
 namespace lexyd
 {

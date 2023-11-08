@@ -1,5 +1,6 @@
 ---
 header: "lexy/input/parse_tree_input.hpp"
+experimental: true
 entities:
   "lexy::parse_tree_encoding": parse_tree_encoding
   "lexy::parse_tree_input": parse_tree_input
@@ -13,7 +14,7 @@ entities:
 Inputs that read a {{% docref "lexy::parse_tree" %}}.
 
 [#parse_tree_encoding]
-== Encoding `lexy::parse_tree_encoding`
+== Encoding `lexy::parse_tree_encoding` {{< experimental >}}
 
 {{% interface %}}
 ----
@@ -29,7 +30,7 @@ The {{% encoding %}} of a {{% docref "lexy::parse_tree_input" %}}.
 It is a node encoding of the specified `Node` type, which must be a `lexy::parse_tree::node`.
 
 [#parse_tree_input]
-== Input `lexy::parse_tree_input`
+== Input `lexy::parse_tree_input` {{< experimental >}}
 
 {{% interface %}}
 ----

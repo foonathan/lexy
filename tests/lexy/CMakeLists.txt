@@ -122,5 +122,5 @@ set(tests
     )
 
 add_executable(lexy_test ${tests})
-target_link_libraries(lexy_test PRIVATE lexy_test_base)
+target_link_libraries(lexy_test PRIVATE lexy_test_base foonathan::lexy::experimental)
 

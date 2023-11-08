@@ -216,3 +216,9 @@ target_sources(lexy_ext INTERFACE ${ext_headers_files})
 add_library(lexy INTERFACE)
 add_alias(lexy lexy)
 target_link_libraries(lexy INTERFACE foonathan::lexy::core foonathan::lexy::file foonathan::lexy::unicode foonathan::lexy::ext)
+
+# Link to enable experimental features.
+add_library(lexy_experimental INTERFACE)
+add_alias(lexy::experimental lexy_experimental)
+target_compile_definitions(lexy_experimental INTERFACE LEXY_EXPERIMENTAL=1)
+

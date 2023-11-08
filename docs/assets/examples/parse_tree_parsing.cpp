@@ -1,5 +1,6 @@
 #include <cstdio>
 
+#define LEXY_EXPERIMENTAL 1
 #include <lexy/action/parse.hpp>
 #include <lexy/action/parse_as_tree.hpp>
 #include <lexy/callback.hpp>
