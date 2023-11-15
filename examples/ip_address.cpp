@@ -252,7 +252,7 @@ int main(int argc, char* argv[])
     std::printf("0x");
     auto count = value.version == 4 ? 2 : 8;
     for (auto i = 0; i < count; ++i)
-        std::printf("%02X", value.pieces[i]);
+        std::printf("%04X", value.pieces[i]);
     std::printf("\n");
 
     return result ? 0 : 1;
