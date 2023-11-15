@@ -15,7 +15,6 @@ target_compile_definitions(lexy_test_base PUBLIC LEXY_TEST)
 if(MSVC AND NOT ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     target_compile_options(lexy_test_base PUBLIC
         /Zc:preprocessor    # need a conforming preprocessor for stringifying escape characters
-        "/utf-8"            # use utf-8 instead of current code page
         /bigobj             # some of the object files are really big for some reason
     )
 endif()

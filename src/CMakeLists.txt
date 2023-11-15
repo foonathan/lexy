@@ -193,7 +193,7 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     # GCC's arry bounds, maybe uninitialized, and restrict warning seems to have false positives.
     target_compile_options(lexy_dev INTERFACE -Wno-array-bounds -Wno-maybe-uninitialized -Wno-restrict)
 elseif(MSVC)
-    target_compile_options(lexy_dev INTERFACE /WX /W3 /D _CRT_SECURE_NO_WARNINGS /wd5105)
+    target_compile_options(lexy_dev INTERFACE /WX /W3 /D _CRT_SECURE_NO_WARNINGS /wd5105 /utf-8)
 endif()
 
 # Link to have FILE I/O.
