@@ -1,6 +1,5 @@
 {{ range sort $.Site.Data.tags "date" "desc" }}
-== {{ .name }} +++{{ if .prerelease }} <i>{{ (resources.Get "icons/beta.svg").Content | safeHTML }} {{ end }}</i>+++
-
++++<h2> {{ .name }} {{ if .prerelease }} <i>{{ (resources.Get "icons/beta.svg").Content | safeHTML }} {{ end }}</i> </h2>+++
 +++<i>{{ (resources.Get "icons/calender.svg").Content | safeHTML }}</i>+++ {{ default (now) .date | time.Format "2006-01-02" }}
 +++<i>{{ (resources.Get "icons/github.svg").Content | safeHTML }}</i>+++ link:{{ .url }}[Github]
 +++<i>{{ (resources.Get "icons/download.svg").Content | safeHTML }}</i>+++ link:{{ .download }}[Download]
