@@ -31,6 +31,7 @@
 * Fix bug with the position passed to the tag constructor of `lexy::dsl::op` (#170).
 * Fix bug where `lexy_ext::report_error` unconditionally wrote to `stderr`, ignoring the output iterator.
 * Fix bug with missing `lexy::error_context::position` in `lexy::parse_as_tree` (#184).
+* Fix `static_assert` in `lexy::parse_tree` (#190).
 * Workaround compiler bugs and improve documentation.
 
 == Release 2022.12.1
