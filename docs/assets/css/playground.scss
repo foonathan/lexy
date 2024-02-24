@@ -90,6 +90,10 @@ nav#menu div.menu-container {
         svg {
             width: 100%;
             background-color: #fdfdfd;
+
+            text {
+                stroke: initial;
+            }
         }
     }
 }
