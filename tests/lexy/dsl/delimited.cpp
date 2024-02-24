@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #include <lexy/dsl/delimited.hpp>
@@ -59,8 +59,7 @@ TEST_CASE("dsl::delimited(open, close)")
 
     constexpr delim_callback callback
         = lexy::callback<int>([](const char*) { return -11; },
-                              [](const char* begin, auto open, std::size_t count,
-                                 auto close) {
+                              [](const char* begin, auto open, std::size_t count, auto close) {
                                   CHECK(open.begin() == begin);
                                   CHECK(open.size() == 1);
                                   CHECK(open[0] == '(');
@@ -70,8 +69,7 @@ TEST_CASE("dsl::delimited(open, close)")
                                   CHECK(close[0] == ')');
 
                                   return int(count);
-                              }
-                              );
+                              });
 
     SUBCASE("as rule")
     {
@@ -222,31 +220,35 @@ TEST_CASE("dsl::delimited(open, close)")
         CHECK(invalid.value == 3);
         CHECK(invalid.trace
               == test_trace()
-                  .literal("(")
-                  .token("any", "a")
-                  .expected_char_class(2, "code-point")
-                  .recovery()
-                  .error_token("\\x80")
-                  .finish()
-                  .token("any", "-c")
-                  .literal(")"));
+                     .literal("(")
+                     .token("any", "a")
+                     .expected_char_class(2, "code-point")
+                     .recovery()
+                     .error_token("\\x80")
+                     .finish()
+                     .token("any", "-c")
+                     .literal(")"));
         auto invalid_end = LEXY_VERIFY_RUNTIME(lexy::utf8_char_encoding{}, "(a\x80)");
         CHECK(invalid_end.status == test_result::recovered_error);
         CHECK(invalid_end.value == 1);
         CHECK(invalid_end.trace
               == test_trace()
-                  .literal("(")
-                  .token("any", "a")
-                  .expected_char_class(2, "code-point")
-                  .recovery()
-                  .error_token("\\x80")
-                  .finish()
-                  .literal(")"));
+                     .literal("(")
+                     .token("any", "a")
+                     .expected_char_class(2, "code-point")
+                     .recovery()
+                     .error_token("\\x80")
+                     .finish()
+                     .literal(")"));
 
         auto unterminated = LEXY_VERIFY(lexy::utf8_char_encoding{}, "(ab");
         CHECK(unterminated.status == test_result::fatal_error);
         CHECK(unterminated.trace
-              == test_trace().literal("(").token("any", "ab").error(1, 3, "missing delimiter").cancel());
+              == test_trace()
+                     .literal("(")
+                     .token("any", "ab")
+                     .error(1, 3, "missing delimiter")
+                     .cancel());
 
         struct production : test_production_for<decltype(rule)>, with_whitespace
         {};

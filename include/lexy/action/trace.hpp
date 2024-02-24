@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_ACTION_TRACE_HPP_INCLUDED
@@ -43,8 +43,7 @@ constexpr auto debug = lexy::_detail::to_type_string<_debug, Str>{};
 #endif
 
 #define LEXY_DEBUG(Str)                                                                            \
-    LEXY_NTTP_STRING(::lexyd::_debug, Str)                                                         \
-    {}
+    LEXY_NTTP_STRING(::lexyd::_debug, Str) {}
 } // namespace lexyd
 
 //=== trace ====//

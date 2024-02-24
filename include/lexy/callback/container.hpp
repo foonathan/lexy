@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2023 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_CALLBACK_CONTAINER_HPP_INCLUDED
@@ -16,7 +16,7 @@ template <typename Container>
 constexpr auto _has_reserve = _detail::is_detected<_detect_reserve, Container>;
 
 template <typename Container>
-using _detect_append = decltype(LEXY_DECLVAL(Container&).append(LEXY_DECLVAL(Container &&)));
+using _detect_append = decltype(LEXY_DECLVAL(Container&).append(LEXY_DECLVAL(Container&&)));
 template <typename Container>
 constexpr auto _has_append = _detail::is_detected<_detect_append, Container>;
 } // namespace lexy
