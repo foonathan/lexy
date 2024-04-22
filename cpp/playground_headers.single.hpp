@@ -6941,7 +6941,7 @@ public:
         LEXY_UNICODE_CATEGORY(Lo, other_letter),
 
         LEXY_UNICODE_CATEGORY(Mn, nonspacing_mark),
-        LEXY_UNICODE_CATEGORY(Mc, spaing_mark),
+        LEXY_UNICODE_CATEGORY(Mc, spacing_mark),
         LEXY_UNICODE_CATEGORY(Me, enclosing_mark),
 
         LEXY_UNICODE_CATEGORY(Nd, decimal_number),
