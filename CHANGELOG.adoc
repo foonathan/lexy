@@ -9,6 +9,7 @@
 * Change `lexy::dsl::try_()` error recovery behavior:
   It will now skip whitespace after the (optional) error recovery rule.
 * Deprecate the `lexy::parse_tree::builder::finish()` overload that does not take a `remaining_input`.
+* The typo `lexy::code_point::spaing_mark` was fixed to `lexy::code_point::spacing_mark`.
 
 === New Features
 
