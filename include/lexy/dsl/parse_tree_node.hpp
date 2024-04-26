@@ -51,7 +51,8 @@ struct _nr : branch_base
         auto child_reader = Derived::node_child_reader(reader);
         reader.reset(end);
 
-        using rule_parser = lexy::parser_for<R, _cont<NextParser>>;
+        using rule_parser
+            = lexy::whitespace_parser<Context, lexy::parser_for<R, _cont<NextParser>>>;
         if (auto rule_succeded = false;
             rule_parser::parse(context, child_reader, rule_succeded, reader, LEXY_FWD(args)...))
         {
