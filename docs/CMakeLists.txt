@@ -32,7 +32,20 @@ add_custom_command(OUTPUT static/download/lexy-src.zip
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         DEPENDS lexy_package)
 
-set(generated_files content/_index.adoc content/learn/changelog.adoc assets/cpp/playground_headers.single.hpp static/download/lexy-src.zip)
+string(TIMESTAMP today "%Y-%m-%d" UTC)
+add_custom_command(OUTPUT data/tags/head.toml
+    COMMAND ${CMAKE_COMMAND} -E echo "name = \\\"Latest development version\\\""                           >  data/tags/head.toml
+    COMMAND ${CMAKE_COMMAND} -E echo "url = \\\"https://github.com/foonathan/lexy\\\""                     >> data/tags/head.toml
+    COMMAND ${CMAKE_COMMAND} -E echo "download = \\\"https://lexy.foonathan.net/download/lexy-src.zip\\\"" >> data/tags/head.toml
+    COMMAND ${CMAKE_COMMAND} -E echo "date = \\\"${today}\\\""                                             >> data/tags/head.toml
+    COMMAND ${CMAKE_COMMAND} -E echo "prerelease = true"                                                   >> data/tags/head.toml
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    DEPENDS static/download/lexy-src.zip)
+
+set(generated_files
+    content/_index.adoc content/learn/changelog.adoc
+    assets/cpp/playground_headers.single.hpp
+    static/download/lexy-src.zip data/tags/head.toml)
 add_custom_target(lexy_docs
         COMMAND ${HUGO_BINARY} --minify
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
