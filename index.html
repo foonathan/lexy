@@ -54,8 +54,9 @@ Log an error, recover, and continue parsing!
 However, they usually do more implicit backtracking, which can hurt performance and you need to be very careful with rules that have side-effects.
 This is not the case for lexy, where backtracking is controlled using branch conditions.
 lexy also gives you a lot of control over error reporting, supports error recovery, special support for operator precedence parsing, and other advanced features.</p><div class=dlist><dl><dt class=hdlist1><a href=http://boost-spirit.com/home/>Boost.Spirit</a></dt><dd><p>The main difference: it is not a Boost library.
-Otherwise, it is just a different implementation with a different flavor.
-Use lexy if you like lexy more.</p></dd><dt class=hdlist1><a href=https://github.com/taocpp/PEGTL>PEGTL</a></dt><dd><p>PEGTL is very similar and was a big inspiration.
+In addition, Boost.Spirit is quite old and doesn’t support e.g. non-common ranges as input.
+Boost.Spirit also eagerly creates attributes from the rules, which can lead to nested tuples/variants while lexy uses callbacks which enables zero-copy parsing directly into your own data structure.
+However, lexy’s grammar is more verbose and designed to parser bigger grammars instead of the small one-off rules that Boost.Spirit is good at.</p></dd><dt class=hdlist1><a href=https://github.com/taocpp/PEGTL>PEGTL</a></dt><dd><p>PEGTL is very similar and was a big inspiration.
 The biggest difference is that lexy uses an operator based DSL instead of inheriting from templated classes as PEGTL does;
 depending on your preference this can be an advantage or disadvantage.</p></dd><dt class=hdlist1>Hand-written Parsers</dt><dd><p>Writing a handwritten parser is more manual work and error prone.
 lexy automates that away without having to sacrifice control.
