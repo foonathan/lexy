@@ -16,7 +16,7 @@
 
 #ifndef LEXY_HAS_BITCAST
 #    if defined(__has_include)
-#        if __has_include(<bit>)
+#        if __has_include(<bit>) && __cplusplus >= 202002L
 #            include <bit>
 #            ifdef __cpp_lib_bit_cast
 #                define LEXY_HAS_BITCAST 1
