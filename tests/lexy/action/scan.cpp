@@ -26,6 +26,11 @@ struct production
         = lexy::callback<int>([](auto lex) { return static_cast<int>(lex.size()); });
 };
 
+struct token_production : lexy::token_production
+{
+    static constexpr auto rule = LEXY_LIT("abc");
+};
+
 struct control_production
 {
     static constexpr auto whitespace = LEXY_LIT(" ");
@@ -387,6 +392,28 @@ TEST_CASE("lexy::scan")
         scanner.parse(LEXY_LIT("abc"));
         CHECK(scanner);
         check_position(scanner, true, input.data() + 7);
+    }
+
+    SUBCASE("capture")
+    {
+        auto input   = lexy::zstring_input("abcabc");
+        auto scanner = lexy::scan(input, errors);
+        CHECK(scanner);
+        check_position(scanner, false, input.data());
+
+        auto lexeme = scanner.capture(LEXY_LIT("abc"));
+        CHECK(scanner);
+        check_position(scanner, false, input.data() + 3);
+        CHECK(lexeme);
+        CHECK(lexeme.value().begin() == input.data());
+        CHECK(lexeme.value().end() == input.data() + 3);
+
+        lexeme = scanner.capture(lexy::dsl::p<token_production>);
+        CHECK(scanner);
+        check_position(scanner, true, input.data() + 6);
+        CHECK(lexeme);
+        CHECK(lexeme.value().begin() == input.data() + 3);
+        CHECK(lexeme.value().end() == input.data() + 6);
     }
 }
 

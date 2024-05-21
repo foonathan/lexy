@@ -136,10 +136,8 @@ namespace lexy
         template <typename T>
         constexpr scan_result<T> integer(_ndigits-dsl_ digits);
 
-        // Forwards to `parse(rule)` (without value!) and then returns a lexeme.
+        // Forwards to `parse(result, dsl::capture(rule))`.
         constexpr scan_result<lexeme<Reader>> capture(_rule_ auto rule);
-        // Forwards to `parse(result, dsl::capture_token(rule))`.
-        constexpr scan_result<lexeme<Reader>> capture_token(_token-rule_ auto rule);
     };
 }
 ----

@@ -4,12 +4,14 @@
 
 === Potential breaking changes
 
+* `scanner-common::capture_token` was renamed to `scanner-common::capture`, and old `scanner-common::capture` removed.
+  Previously, `capture_token` was a linker error anyway, but if you're calling `scanner-common::capture` it will no longer work for arbitrary rules and instead only like `dsl::capture`.
 * `lexy::parse_as_tree` will add a position token to production nodes that would otherwise be empty.
   That way, no production node will be empty, unless the builder API is used directly.
 * Change `lexy::dsl::try_()` error recovery behavior:
   It will now skip whitespace after the (optional) error recovery rule.
 * Deprecate the `lexy::parse_tree::builder::finish()` overload that does not take a `remaining_input`.
-* The typo `lexy::code_point::spaing_mark` was fixed to `lexy::code_point::spacing_mark`.
+* The typo `lexy::code_point::spaing_mark` was fixed to `spacing_mark`.
 
 === New Features
 
