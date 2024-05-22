@@ -21012,7 +21012,9 @@ struct _prd;
 template <typename Rule, typename Tag>
 struct _peek;
 template <typename Token>
-struct _capt;
+struct _cap;
+template <typename Rule>
+struct _capr;
 template <typename T, typename Base>
 struct _int_dsl;
 
@@ -21373,25 +21375,18 @@ public:
         return result;
     }
 
-    template <typename Rule>
-    constexpr auto capture(Rule rule) -> scan_result<lexeme<Reader>>
-    {
-        static_assert(lexy::is_rule<Rule>);
-
-        auto begin = _reader.position();
-        parse(rule);
-        auto end = _reader.position();
-
-        if (*this)
-            return lexeme<Reader>(begin, end);
-        else
-            return scan_failed;
-    }
     template <typename Token>
-    constexpr auto capture_token(Token)
+    constexpr auto capture(Token)
     {
         scan_result<lexeme<Reader>> result;
-        parse(result, lexyd::_capt<Token>{});
+        parse(result, lexyd::_cap<Token>{});
+        return result;
+    }
+    template <typename Production>
+    constexpr auto capture(lexyd::_prd<Production>)
+    {
+        scan_result<lexeme<Reader>> result;
+        parse(result, lexyd::_capr<lexyd::_prd<Production>>{});
         return result;
     }
 
