@@ -177,10 +177,13 @@ target_include_directories(lexy_dev INTERFACE
     )
 
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-    if("${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC")
+    if("${CMAKE_CXX_COMPILER_FRONTEND_VARIANT}" STREQUAL "MSVC")
         target_compile_options(lexy_dev INTERFACE /WX /W3 /D _CRT_SECURE_NO_WARNINGS)
     else()
         target_compile_options(lexy_dev INTERFACE -pedantic-errors -Werror -Wall -Wextra -Wconversion -Wsign-conversion)
+        if("${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC")
+            target_compile_options(lexy_dev INTERFACE -D_CRT_SECURE_NO_WARNINGS)
+        endif()
     endif()
     # clang doesn't like operator precedence rules we're using for the DSL.
     target_compile_options(lexy_dev INTERFACE -Wno-shift-op-parentheses -Wno-parentheses-equality)
