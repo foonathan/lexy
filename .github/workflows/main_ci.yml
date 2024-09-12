@@ -52,13 +52,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        xcode:
-            - '11'
-            - '12'
-            - '13'
+        xcode: ['14', '15']
         build_type: [Debug, Release]
 
-    runs-on: macos-11
+    runs-on: macos-13
 
     steps:
     - uses: actions/checkout@v2
