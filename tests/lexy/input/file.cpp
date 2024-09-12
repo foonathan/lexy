@@ -7,7 +7,7 @@
 #include <cstdio>
 #include <doctest/doctest.h>
 
-#if defined(__has_include) && __has_include(<memory_resource>)
+#if defined(__has_include) && __has_include(<memory_resource>) && !defined(_LIBCPP_VERSION)
 #    include <memory_resource>
 #    define LEXY_HAS_RESOURCE 1
 #else
