@@ -45,6 +45,7 @@ Requires::
   The current production `P` has a `static` member function that returns a {{% docref "lexy::scan_result" %}},
   It must take at least one argument, which is a reference to a `lexy::rule_scanner`.
   It can optionally take a second argument, which is a reference to the parse state passed to the top-level action.
+  It must also take all values produced by previous rules.
 Parsing::
   Invokes `P::scan()`, passing it an object of type `lexy::rule_scanner` starting at the current reader position, and optionally the parse state, followed by all values already produced by previous rules.
   Then parses and consumes everything parsed and consumed by `P::scan()`.

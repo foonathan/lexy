@@ -56,20 +56,23 @@ struct simple_scan : lexy::scan_production<int>, test_production
     }
 };
 
-struct state_scan : lexy::scan_production<const char*>, test_production
+struct state_scan : lexy::scan_production<int>, test_production
 {
+    static constexpr auto rule = dsl::integer<int> + dsl::scan;
+
     // Overload is required as we also call lexy::match without a state.
     template <typename Reader, typename Context>
-    static constexpr scan_result scan(lexy::rule_scanner<Context, Reader>&)
+    static constexpr scan_result scan(lexy::rule_scanner<Context, Reader>&, int value)
     {
-        return nullptr;
+        return value;
     }
 
     template <typename Reader, typename Context, typename State>
-    static constexpr scan_result scan(lexy::rule_scanner<Context, Reader>&, const State& state)
+    static constexpr scan_result scan(lexy::rule_scanner<Context, Reader>& scanner,
+                                      const State& state, int value)
     {
         // The parse state is the test handler itself.
-        return state.begin();
+        return value + (state.begin() == scanner.position());
     }
 };
 
@@ -197,15 +200,15 @@ TEST_CASE("dsl::scan")
     }
     SUBCASE("with state")
     {
-        constexpr auto callback = [](const char* begin, const char* value) {
-            CHECK(begin == value);
+        constexpr auto callback = [](const char*, int value) {
+            CHECK(value == 42);
             return 0;
         };
 
-        auto empty = LEXY_VERIFY_P(state_scan, "");
+        auto empty = LEXY_VERIFY_P(state_scan, "42");
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == 0);
-        CHECK(empty.trace == test_trace());
+        CHECK(empty.trace == test_trace().digits("42"));
     }
     SUBCASE("branch scan")
     {
