@@ -22,7 +22,7 @@
 * Add `lexy::parse_tree::node::position()` and `::covering_lexeme()`.
 * Add default argument to `lexy::dsl::flag()`.
 * Add `lexy::callback_with_state`.
-* Pass the parse state to the tag of `lexy::dsl::op` if required (#172).
+* Pass the parse state to the tag of `lexy::dsl::op` if required (#172) and to `lexy::dsl::error` (#211).
 
 === Bug fixes
 

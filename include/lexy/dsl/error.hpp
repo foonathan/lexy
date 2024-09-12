@@ -10,6 +10,14 @@
 
 namespace lexyd
 {
+template <typename Rule>
+struct _err_production
+{
+    static constexpr auto name                = "<error>";
+    static constexpr auto max_recursion_depth = 0;
+    static constexpr auto rule                = Rule{};
+};
+
 template <typename Tag, typename Rule>
 struct _err : unconditional_branch_base
 {
@@ -23,9 +31,17 @@ struct _err : unconditional_branch_base
             auto end   = reader.position();
             if constexpr (!std::is_same_v<Rule, void>)
             {
-                lexy::token_parser_for<decltype(lexyd::token(Rule{})), Reader> parser(reader);
-                parser.try_parse(reader);
-                end = parser.end.position();
+                auto backtrack = reader.current();
+
+                // We match a dummy production that only consists of the rule.
+                lexy::do_action<
+                    _err_production<Rule>,
+                    lexy::match_action<void, Reader>::template result_type>(lexy::_mh(),
+                                                                            context.control_block
+                                                                                ->parse_state,
+                                                                            reader);
+                end = reader.position();
+                reader.reset(LEXY_MOV(backtrack));
             }
 
             auto err = lexy::error<Reader, Tag>(begin, end);

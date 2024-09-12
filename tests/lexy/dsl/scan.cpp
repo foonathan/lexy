@@ -7,6 +7,7 @@
 #include <lexy/dsl/branch.hpp>
 #include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/eof.hpp>
+#include <lexy/dsl/error.hpp>
 #include <lexy/dsl/if.hpp>
 #include <lexy/dsl/integer.hpp>
 #include <lexy/dsl/peek.hpp>
@@ -126,6 +127,14 @@ struct whitespace_scan : lexy::scan_production<void>, test_production
         return scanner.parse(token{});
     }
 };
+
+struct my_error
+{
+    static constexpr auto name()
+    {
+        return "my error";
+    }
+};
 } // namespace
 
 TEST_CASE("dsl::scan")
@@ -209,6 +218,11 @@ TEST_CASE("dsl::scan")
         CHECK(empty.status == test_result::success);
         CHECK(empty.value == 0);
         CHECK(empty.trace == test_trace().digits("42"));
+
+        constexpr auto rule  = dsl::error<my_error>(dsl::p<state_scan>);
+        auto           error = LEXY_VERIFY("42");
+        CHECK(error.status == test_result::fatal_error);
+        CHECK(error.trace == test_trace().error(0, 2, "my error").cancel());
     }
     SUBCASE("branch scan")
     {
