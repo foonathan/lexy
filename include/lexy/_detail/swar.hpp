@@ -4,6 +4,9 @@
 #ifndef LEXY_DETAIL_SWAR_HPP_INCLUDED
 #define LEXY_DETAIL_SWAR_HPP_INCLUDED
 
+#if defined(_MSC_VER) && _MSVC_LANG >= 202002L
+#    include <bit>
+#endif
 #include <climits>
 #include <cstdint>
 #include <cstring>
@@ -139,10 +142,12 @@ constexpr std::size_t swar_find_difference(swar_int lhs, swar_int rhs)
 
 #if defined(__GNUC__)
     auto bit_idx = __builtin_ctzll(mask);
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && _MSVC_LANG >= 202002L
+    auto bit_idx = std::countr_zero(mask);
+#elif defined(_MSC_VER) && defined(_WIN64)
     unsigned long bit_idx;
     if (!_BitScanForward64(&bit_idx, mask))
-        bit_idx         = 64;
+        bit_idx = 64;
 #else
 #    error "unsupported compiler; please file an issue"
 #endif

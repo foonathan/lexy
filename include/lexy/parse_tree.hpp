@@ -132,7 +132,7 @@ struct pt_node_token : pt_node<Reader>
         if constexpr (_optimize_end)
         {
             static_assert(!std::is_pointer_v<typename Reader::iterator>
-                          || sizeof(pt_node_token) == 3 * sizeof(void*));
+                          || sizeof(pt_node_token) == 2 * sizeof(void*) + 8);
 
             auto size = std::size_t(end - begin);
             LEXY_PRECONDITION(size <= UINT_LEAST32_MAX);
