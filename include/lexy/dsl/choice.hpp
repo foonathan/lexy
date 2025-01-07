@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_CHOICE_HPP_INCLUDED
@@ -106,7 +106,7 @@ struct _chc
 
                 // LEXY_FWD(args) will break MSVC builds targeting C++17.
                 result = parser.template finish<NextParser>(context, reader,
-                                                            static_cast<Args&&>(args)...);
+                                                             static_cast<Args&&>(args)...);
                 return true;
             };
 

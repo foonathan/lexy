@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_CALLBACK_BASE_HPP_INCLUDED
@@ -60,8 +60,8 @@ struct _fn_holder
     constexpr explicit _fn_holder(Fn fn) : fn(fn) {}
 
     template <typename... Args>
-    constexpr auto operator()(Args&&... args) const
-        -> decltype(_detail::invoke(fn, LEXY_FWD(args)...))
+    constexpr auto operator()(Args&&... args) const -> decltype(_detail::invoke(fn,
+                                                                                LEXY_FWD(args)...))
     {
         return _detail::invoke(fn, LEXY_FWD(args)...);
     }

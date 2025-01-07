@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_INTEGER_HPP_INCLUDED
@@ -556,7 +556,7 @@ template <typename Encoding, std::size_t N, typename Base = hex>
 constexpr auto code_unit_id = [] {
     using char_type = typename Encoding::char_type;
     using type      = std::conditional_t<_ndigits_can_overflow<char_type, N, Base::digit_radix>(),
-                                    char_type, lexy::unbounded<char_type>>;
+                                         char_type, lexy::unbounded<char_type>>;
     using parser    = _integer_parser<type, Base, true>;
     return _int<_ndigits<N, Base>, parser, lexy::invalid_code_unit>{};
 }();

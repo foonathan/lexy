@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #include <lexy/dsl/member.hpp>
@@ -34,7 +34,7 @@ TEST_CASE("dsl::member")
 
     SUBCASE("non-macro")
     {
-        constexpr auto rule = (dsl::member<& test_type::member> = LEXY_LIT("abc")) + dsl::position;
+        constexpr auto rule = (dsl::member<&test_type::member> = LEXY_LIT("abc")) + dsl::position;
         CHECK(lexy::is_rule<decltype(rule)>);
 
         auto empty = LEXY_VERIFY("");
@@ -66,7 +66,7 @@ TEST_CASE("dsl::member")
     SUBCASE("as branch")
     {
         constexpr auto rule
-            = dsl::if_(dsl::member<& test_type::member> = LEXY_LIT("abc") >> dsl::position);
+            = dsl::if_(dsl::member<&test_type::member> = LEXY_LIT("abc") >> dsl::position);
         CHECK(lexy::is_rule<decltype(rule)>);
 
         auto empty = LEXY_VERIFY("");

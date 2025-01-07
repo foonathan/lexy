@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_ACTION_PARSE_AS_TREE_HPP_INCLUDED
@@ -187,8 +187,8 @@ struct parse_as_tree_action
 template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
           typename ErrorCallback>
 auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
-                   const Input& input, const ErrorCallback& callback)
-    -> validate_result<ErrorCallback>
+                   const Input&                                                      input,
+                   const ErrorCallback& callback) -> validate_result<ErrorCallback>
 {
     return parse_as_tree_action<void, Input, ErrorCallback, TokenKind,
                                 MemoryResource>(tree, callback)(Production{}, input);
@@ -196,8 +196,8 @@ auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResour
 template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
           typename State, typename ErrorCallback>
 auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
-                   const Input& input, State& state, const ErrorCallback& callback)
-    -> validate_result<ErrorCallback>
+                   const Input& input, State& state,
+                   const ErrorCallback& callback) -> validate_result<ErrorCallback>
 {
     return parse_as_tree_action<State, Input, ErrorCallback, TokenKind,
                                 MemoryResource>(state, tree, callback)(Production{}, input);
@@ -205,8 +205,8 @@ auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResour
 template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
           typename State, typename ErrorCallback>
 auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
-                   const Input& input, const State& state, const ErrorCallback& callback)
-    -> validate_result<ErrorCallback>
+                   const Input& input, const State& state,
+                   const ErrorCallback& callback) -> validate_result<ErrorCallback>
 {
     return parse_as_tree_action<const State, Input, ErrorCallback, TokenKind,
                                 MemoryResource>(state, tree, callback)(Production{}, input);

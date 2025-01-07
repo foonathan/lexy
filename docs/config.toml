@@ -1,7 +1,7 @@
 title = "lexy"
 baseURL = "https://lexy.foonathan.net/"
 languageCode = "en-us"
-copyright = "2020-2024 Jonathan Müller and lexy contributors"
+copyright = "2020-2025 Jonathan Müller and lexy contributors"
 
 disableKinds = ["RSS", "taxonomy"]
 

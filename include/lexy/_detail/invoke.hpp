@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_INVOKE_HPP_INCLUDED
@@ -45,8 +45,8 @@ struct _mem_invoker<F ClassT::*, false>
     }
 
     template <typename... Args>
-    static constexpr auto invoke(F ClassT::*f, Args&&... args)
-        -> decltype(_invoke(0, f, LEXY_FWD(args)...))
+    static constexpr auto invoke(F ClassT::*f,
+                                 Args&&... args) -> decltype(_invoke(0, f, LEXY_FWD(args)...))
     {
         return _invoke(0, f, LEXY_FWD(args)...);
     }

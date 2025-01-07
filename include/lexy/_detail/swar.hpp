@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_SWAR_HPP_INCLUDED
@@ -142,7 +142,7 @@ constexpr std::size_t swar_find_difference(swar_int lhs, swar_int rhs)
 #elif defined(_MSC_VER)
     unsigned long bit_idx;
     if (!_BitScanForward64(&bit_idx, mask))
-        bit_idx         = 64;
+        bit_idx = 64;
 #else
 #    error "unsupported compiler; please file an issue"
 #endif

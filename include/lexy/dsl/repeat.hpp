@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_REPEAT_HPP_INCLUDED
@@ -128,8 +128,7 @@ struct _repc : rule_base // repeat, capture
 };
 
 template <typename Count, typename Loop>
-struct _rep : decltype(_maybe_branch(_pas<std::size_t, Count, true>{}, Loop{}))
-{};
+struct _rep : decltype(_maybe_branch(_pas<std::size_t, Count, true>{}, Loop{})){};
 
 template <typename Count>
 struct _rep_dsl

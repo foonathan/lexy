@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_ACTION_VALIDATE_HPP_INCLUDED
@@ -296,21 +296,21 @@ struct validate_action
 };
 
 template <typename Production, typename Input, typename ErrorCallback>
-constexpr auto validate(const Input& input, const ErrorCallback& callback)
-    -> validate_result<ErrorCallback>
+constexpr auto validate(const Input&         input,
+                        const ErrorCallback& callback) -> validate_result<ErrorCallback>
 {
     return validate_action<void, Input, ErrorCallback>(callback)(Production{}, input);
 }
 
 template <typename Production, typename Input, typename State, typename ErrorCallback>
-constexpr auto validate(const Input& input, State& state, const ErrorCallback& callback)
-    -> validate_result<ErrorCallback>
+constexpr auto validate(const Input& input, State& state,
+                        const ErrorCallback& callback) -> validate_result<ErrorCallback>
 {
     return validate_action<State, Input, ErrorCallback>(state, callback)(Production{}, input);
 }
 template <typename Production, typename Input, typename State, typename ErrorCallback>
-constexpr auto validate(const Input& input, const State& state, const ErrorCallback& callback)
-    -> validate_result<ErrorCallback>
+constexpr auto validate(const Input& input, const State& state,
+                        const ErrorCallback& callback) -> validate_result<ErrorCallback>
 {
     return validate_action<const State, Input, ErrorCallback>(state, callback)(Production{}, input);
 }

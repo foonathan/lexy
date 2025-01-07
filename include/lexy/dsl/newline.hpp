@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_NEWLINE_HPP_INCLUDED
@@ -21,9 +21,8 @@ struct expected_newline
 
 namespace lexyd
 {
-struct _nl
-: LEXY_DECAY_DECLTYPE(literal_set(LEXY_LIT("\n"), LEXY_LIT("\r\n")).error<lexy::expected_newline>)
-{};
+struct _nl : LEXY_DECAY_DECLTYPE(
+                 literal_set(LEXY_LIT("\n"), LEXY_LIT("\r\n")).error<lexy::expected_newline>){};
 
 /// Matches a newline character.
 constexpr auto newline = _nl{};

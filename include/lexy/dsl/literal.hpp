@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_LITERAL_HPP_INCLUDED
@@ -469,7 +469,7 @@ struct _lcp : token_base<_lcp<Cp...>>, _lit_base
             auto begin = reader.position();
             auto index = lexy::_detail::range_size(begin, end.position());
             auto err   = lexy::error<Reader, lexy::expected_literal>(begin, _string<encoding>.data,
-                                                                   index, _string<encoding>.length);
+                                                                     index, _string<encoding>.length);
             context.on(_ev::error{}, err);
         }
     };

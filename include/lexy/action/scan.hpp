@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_ACTION_SCAN_HPP_INCLUDED
@@ -32,7 +32,7 @@ class scanner : public _detail::scanner<scanner<ControlProduction, Input, State,
                                         lexy::input_reader<Input>>
 {
     using _impl       = _detail::scanner<scanner<ControlProduction, Input, State, ErrorCallback>,
-                                   lexy::input_reader<Input>>;
+                                         lexy::input_reader<Input>>;
     using _handler    = lexy::_vh<lexy::input_reader<Input>>;
     using _production = _scp<ControlProduction>;
 

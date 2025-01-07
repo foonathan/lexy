@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_TOKEN_HPP_INCLUDED
@@ -274,8 +274,8 @@ template <typename TokenKind, typename Reader,
 token(TokenKind, lexy::lexeme<Reader>) -> token<Reader, TokenKind>;
 template <typename TokenRule, typename Reader,
           typename = std::enable_if_t<_has_special_token_kind<TokenRule>>>
-token(TokenRule, lexy::lexeme<Reader>)
-    -> token<Reader, LEXY_DECAY_DECLTYPE(lexy::token_kind_of<TokenRule>)>;
+token(TokenRule,
+      lexy::lexeme<Reader>) -> token<Reader, LEXY_DECAY_DECLTYPE(lexy::token_kind_of<TokenRule>)>;
 
 template <typename Input, typename TokenKind = void>
 using token_for = token<lexy::input_reader<Input>, TokenKind>;

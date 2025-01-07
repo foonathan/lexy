@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_INPUT_LOCATION_HPP_INCLUDED
@@ -206,18 +206,16 @@ private:
     unsigned _line_nr, _column_nr;
 
     template <typename C, typename I>
-    friend constexpr auto get_input_location(const I&                                 input,
-                                             typename lexy::input_reader<I>::iterator position,
-                                             input_location_anchor<I>                 anchor)
-        -> input_location<I, C>;
+    friend constexpr auto get_input_location(
+        const I& input, typename lexy::input_reader<I>::iterator position,
+        input_location_anchor<I> anchor) -> input_location<I, C>;
 };
 
 /// The location for a position in the input; search starts at the anchor.
 template <typename Counting, typename Input>
-constexpr auto get_input_location(const Input&                                 input,
-                                  typename lexy::input_reader<Input>::iterator position,
-                                  input_location_anchor<Input>                 anchor)
-    -> input_location<Input, Counting>
+constexpr auto get_input_location(
+    const Input& input, typename lexy::input_reader<Input>::iterator position,
+    input_location_anchor<Input> anchor) -> input_location<Input, Counting>
 {
     auto reader = input.reader();
     reader.reset(anchor._line_begin);
@@ -415,10 +413,9 @@ constexpr void _get_input_line_annotation(input_line_annotation<Input>&         
 }
 
 template <typename Input, typename Counting>
-constexpr auto get_input_line_annotation(const Input&                           input,
-                                         const input_location<Input, Counting>& begin_location,
-                                         typename lexy::input_reader<Input>::iterator end)
-    -> input_line_annotation<Input>
+constexpr auto get_input_line_annotation(
+    const Input& input, const input_location<Input, Counting>& begin_location,
+    typename lexy::input_reader<Input>::iterator end) -> input_line_annotation<Input>
 {
     input_line_annotation<Input> result{};
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_CALLBACK_ADAPTER_HPP_INCLUDED
@@ -84,8 +84,8 @@ struct _cb_from_sink
     using return_type = typename _cb::return_type;
 
     template <typename... Args>
-    constexpr auto operator()(Args&&... args) const
-        -> decltype((LEXY_DECLVAL(_cb&)(LEXY_FWD(args)), ..., LEXY_DECLVAL(_cb&&).finish()))
+    constexpr auto operator()(Args&&... args) const -> decltype((LEXY_DECLVAL(_cb&)(LEXY_FWD(args)),
+                                                                 ..., LEXY_DECLVAL(_cb&&).finish()))
     {
         auto cb = _sink.sink();
         (cb(LEXY_FWD(args)), ...);

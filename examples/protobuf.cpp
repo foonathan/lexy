@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 // This examples parses a protobuf message in the binary encoding.
@@ -206,9 +206,8 @@ namespace grammar
         // It's just a varint.
         static constexpr auto rule = dsl::p<varint>;
         // But we split it into the number and wire type.
-        static constexpr auto value = lexy::callback<result>([](std::uint64_t v) {
-            return result{v >> 3, static_cast<int>(v & 0b111)};
-        });
+        static constexpr auto value = lexy::callback<result>(
+            [](std::uint64_t v) { return result{v >> 3, static_cast<int>(v & 0b111)}; });
     };
 
     // A field needs to dispatch a production based on the wire type.

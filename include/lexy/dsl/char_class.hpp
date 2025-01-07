@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_CHAR_CLASS_HPP_INCLUDED
@@ -393,7 +393,8 @@ struct _calt : char_class_base<_calt<Cs...>>
                           // only match ASCII.
                           || ((!Cs::char_class_unicode()
                                || std::is_same_v<decltype(Cs::char_class_match_cp(0)),
-                                                 std::false_type>)&&...),
+                                                 std::false_type>)
+                              && ...),
                       "cannot mix bytes and Unicode char classes");
         return !non_unicode;
     }

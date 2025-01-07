@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_INPUT_BUFFER_HPP_INCLUDED
@@ -304,11 +304,11 @@ template <typename View>
 buffer(const View&) -> buffer<deduce_encoding<LEXY_DECAY_DECLTYPE(*LEXY_DECLVAL(View).data())>>;
 
 template <typename CharT, typename MemoryResource>
-buffer(const CharT*, const CharT*, MemoryResource*)
-    -> buffer<deduce_encoding<CharT>, MemoryResource>;
+buffer(const CharT*, const CharT*,
+       MemoryResource*) -> buffer<deduce_encoding<CharT>, MemoryResource>;
 template <typename CharT, typename MemoryResource>
-buffer(const CharT*, std::size_t, MemoryResource*)
-    -> buffer<deduce_encoding<CharT>, MemoryResource>;
+buffer(const CharT*, std::size_t,
+       MemoryResource*) -> buffer<deduce_encoding<CharT>, MemoryResource>;
 template <typename View, typename MemoryResource>
 buffer(const View&, MemoryResource*)
     -> buffer<deduce_encoding<LEXY_DECAY_DECLTYPE(*LEXY_DECLVAL(View).data())>, MemoryResource>;
