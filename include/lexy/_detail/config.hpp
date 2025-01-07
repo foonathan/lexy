@@ -50,7 +50,7 @@ template <typename T>
 std::add_rvalue_reference_t<T> declval();
 
 template <typename T>
-constexpr void swap(T& lhs, T& rhs)
+constexpr void swap(T& lhs, T& rhs) noexcept
 {
     T tmp = LEXY_MOV(lhs);
     lhs   = LEXY_MOV(rhs);

@@ -14,7 +14,7 @@
 
 namespace lexy_ext
 {
-#if 0
+#if 0 // NOLINT
 /// Controls how the shell performs I/O.
 class Prompt
 {

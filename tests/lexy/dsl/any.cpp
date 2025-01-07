@@ -12,7 +12,6 @@ TEST_CASE("dsl::any")
 
     constexpr auto callback = token_callback;
 
-#if 0
     auto empty = LEXY_VERIFY("");
     CHECK(empty.status == test_result::success);
     CHECK(empty.trace == test_trace().token("any", ""));
@@ -32,7 +31,6 @@ TEST_CASE("dsl::any")
     auto swar_long = LEXY_VERIFY(lexy::utf8_char_encoding{}, "123456789012345678901234567890");
     CHECK(swar_long.status == test_result::success);
     CHECK(swar_long.trace == test_trace().token("any", "123456789012345678901234567890"));
-#endif
 
     auto swar_unicode
         = LEXY_VERIFY(lexy::utf8_char_encoding{}, "123456789\u00E401234567890\u00E51234567890");

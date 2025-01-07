@@ -101,7 +101,7 @@ constexpr std::size_t encode_code_point(char32_t cp, typename Encoding::char_typ
     {
         LEXY_PRECONDITION(size >= 1);
 
-        *buffer = char32_t(cp);
+        *buffer = cp;
         return 1;
     }
     else

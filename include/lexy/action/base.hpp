@@ -47,14 +47,15 @@ namespace _detail
         T value;
 
         explicit constexpr parse_context_var(T&& value)
-        : parse_context_var_base(&type_id), value(LEXY_MOV(value))
+        : parse_context_var_base(static_cast<const void*>(&type_id) /* NOLINT */),
+          value(LEXY_MOV(value))
         {}
 
         template <typename ControlBlock>
         static constexpr T& get(const ControlBlock* cb)
         {
             for (auto cur = cb->vars; cur; cur = cur->next)
-                if (cur->id == &type_id)
+                if (cur->id == static_cast<const void*>(&type_id) /* NOLINT */)
                     return static_cast<parse_context_var*>(cur)->value;
 
             LEXY_ASSERT(false, "context variable hasn't been created");

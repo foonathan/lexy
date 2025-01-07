@@ -9,7 +9,7 @@
 #include <lexy/_detail/config.hpp>
 #include <new>
 
-#if 0
+#if 0 // NOLINT
 // Subset of the interface of std::pmr::memory_resource.
 class MemoryResource
 {

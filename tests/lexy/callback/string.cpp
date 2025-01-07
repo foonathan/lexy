@@ -148,7 +148,7 @@ TEST_CASE("as_string")
         std::string from_unicode_cp_alloc
             = lexy::as_string<std::string, lexy::utf8_encoding>(std::allocator<char>{},
                                                                 lexy::code_point(0x00E4));
-        CHECK(from_unicode_cp == "\u00E4");
+        CHECK(from_unicode_cp_alloc == "\u00E4");
 
         std::string from_sink = [&] {
             auto sink = lexy::as_string<std::string, lexy::utf8_encoding>.sink();
@@ -209,7 +209,7 @@ TEST_CASE("as_string")
         std::string from_cp = callback(lexy::code_point(0x00C4));
         CHECK(from_cp == "\u00C4");
         std::string from_cp_alloc = callback(std::allocator<char>{}, lexy::code_point(0x00C4));
-        CHECK(from_cp == "\u00C4");
+        CHECK(from_cp_alloc == "\u00C4");
 
         std::string from_sink = [&] {
             auto sink = callback.sink();
@@ -255,7 +255,7 @@ TEST_CASE("as_string")
         std::string from_cp = callback(lexy::code_point(0x00C4));
         CHECK(from_cp == "\u00E4");
         std::string from_cp_alloc = callback(std::allocator<char>{}, lexy::code_point(0x00C4));
-        CHECK(from_cp == "\u00E4");
+        CHECK(from_cp_alloc == "\u00E4");
 
         std::string from_sink = [&] {
             auto sink = callback.sink();

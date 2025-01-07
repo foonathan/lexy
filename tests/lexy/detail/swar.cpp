@@ -66,10 +66,10 @@ TEST_CASE("swar_pack")
 TEST_CASE("swar_find_difference")
 {
     REQUIRE(sizeof(swar_int) == 8);
-    constexpr auto a   = swar_pack(char('a')).value;
-    constexpr auto A   = swar_pack(char('A')).value;
-    constexpr auto abc = swar_pack(char('a'), char('b'), char('c')).value;
-    constexpr auto aBc = swar_pack(char('a'), char('B'), char('c')).value;
+    constexpr auto a   = swar_pack('a').value;
+    constexpr auto A   = swar_pack('A').value;
+    constexpr auto abc = swar_pack('a', 'b', 'c').value;
+    constexpr auto aBc = swar_pack('a', 'B', 'c').value;
 
     CHECK(swar_find_difference<char>(a, a) == 8);
     CHECK(swar_find_difference<char>(a, A) == 0);
@@ -89,9 +89,7 @@ TEST_CASE("swar_has_zero")
         constexpr auto all_high = swar_fill(char(0xAB));
         CHECK(!swar_has_zero<char>(all_high));
 
-        constexpr auto contains_zero = swar_pack(char('a'), char('b'), char('c'), char(0),
-                                                 char('d'), char('e'), char('f'), char('g'))
-                                           .value;
+        constexpr auto contains_zero = swar_pack('a', 'b', 'c', char(0), 'd', 'e', 'f', 'g').value;
         CHECK(swar_has_zero<char>(contains_zero));
     }
     SUBCASE("char32_t")
@@ -123,9 +121,7 @@ TEST_CASE("swar_has_char")
         constexpr auto all_high = swar_fill(char(0xAB));
         CHECK(!swar_has_char<char, 1>(all_high));
 
-        constexpr auto contains_one = swar_pack(char('a'), char('b'), char('c'), char(1), char('d'),
-                                                char('e'), char('f'), char('g'))
-                                          .value;
+        constexpr auto contains_one = swar_pack('a', 'b', 'c', char(1), 'd', 'e', 'f', 'g').value;
         CHECK(swar_has_char<char, 1>(contains_one));
     }
     SUBCASE("char32_t")

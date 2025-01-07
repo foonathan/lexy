@@ -934,7 +934,7 @@ TEST_CASE("dsl::code_unit_id")
     CHECK(lexy::is_branch_rule<decltype(id)>);
 
     constexpr auto callback
-        = lexy::callback<int>([](const char*) { return int(0); },
+        = lexy::callback<int>([](const char*) { return 0; },
                               [](const char*, LEXY_CHAR8_T c) { return int(c); });
 
     SUBCASE("as rule")
