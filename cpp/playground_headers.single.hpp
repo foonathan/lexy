@@ -1,17 +1,17 @@
 #define LEXY_HAS_UNICODE_DATABASE 1
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_ACTION_PARSE_AS_TREE_HPP_INCLUDED
 #define LEXY_ACTION_PARSE_AS_TREE_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_ACTION_BASE_HPP_INCLUDED
 #define LEXY_ACTION_BASE_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_CONFIG_HPP_INCLUDED
@@ -63,7 +63,7 @@ template <typename T>
 std::add_rvalue_reference_t<T> declval();
 
 template <typename T>
-constexpr void swap(T& lhs, T& rhs)
+constexpr void swap(T& lhs, T& rhs) noexcept
 {
     T tmp = LEXY_MOV(lhs);
     lhs   = LEXY_MOV(rhs);
@@ -210,13 +210,13 @@ using _char8_t = unsigned char;
 
 #endif // LEXY_DETAIL_CONFIG_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_LAZY_INIT_HPP_INCLUDED
 #define LEXY_DETAIL_LAZY_INIT_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_ASSERT_HPP_INCLUDED
@@ -268,7 +268,7 @@ using _char8_t = unsigned char;
 #endif // LEXY_DETAIL_ASSERT_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_STD_HPP_INCLUDED
@@ -603,14 +603,14 @@ private:
 
 #endif // LEXY_DETAIL_LAZY_INIT_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_TYPE_NAME_HPP_INCLUDED
 #define LEXY_DETAIL_TYPE_NAME_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_DETECT_HPP_INCLUDED
@@ -645,7 +645,7 @@ using detected_or = typename _detector<Op, void, Args...>::template type_or<Fall
 
 #endif // LEXY_DETAIL_DETECT_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_INTEGER_SEQUENCE_HPP_INCLUDED
@@ -709,7 +709,7 @@ using index_sequence_for = make_index_sequence<sizeof...(T)>;
 
 #endif // LEXY_DETAIL_INTEGER_SEQUENCE_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_STRING_VIEW_HPP_INCLUDED
@@ -1041,13 +1041,13 @@ constexpr const char* const* type_id()
 
 #endif // LEXY_DETAIL_TYPE_NAME_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_CALLBACK_NOOP_HPP_INCLUDED
 #define LEXY_CALLBACK_NOOP_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_CALLBACK_BASE_HPP_INCLUDED
@@ -1055,7 +1055,7 @@ constexpr const char* const* type_id()
 
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_INVOKE_HPP_INCLUDED
@@ -1102,8 +1102,8 @@ struct _mem_invoker<F ClassT::*, false>
     }
 
     template <typename... Args>
-    static constexpr auto invoke(F ClassT::*f, Args&&... args)
-        -> decltype(_invoke(0, f, LEXY_FWD(args)...))
+    static constexpr auto invoke(F ClassT::*f,
+                                 Args&&... args) -> decltype(_invoke(0, f, LEXY_FWD(args)...))
     {
         return _invoke(0, f, LEXY_FWD(args)...);
     }
@@ -1178,8 +1178,8 @@ struct _fn_holder
     constexpr explicit _fn_holder(Fn fn) : fn(fn) {}
 
     template <typename... Args>
-    constexpr auto operator()(Args&&... args) const
-        -> decltype(_detail::invoke(fn, LEXY_FWD(args)...))
+    constexpr auto operator()(Args&&... args) const -> decltype(_detail::invoke(fn,
+                                                                                LEXY_FWD(args)...))
     {
         return _detail::invoke(fn, LEXY_FWD(args)...);
     }
@@ -1234,7 +1234,7 @@ inline constexpr auto noop = _noop{};
 
 #endif // LEXY_CALLBACK_NOOP_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_BASE_HPP_INCLUDED
@@ -1242,7 +1242,7 @@ inline constexpr auto noop = _noop{};
 
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_GRAMMAR_HPP_INCLUDED
@@ -1623,14 +1623,14 @@ private:
 } // namespace lexy
 
 #endif // LEXY_GRAMMAR_HPP_INCLUDED
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_INPUT_BASE_HPP_INCLUDED
 #define LEXY_INPUT_BASE_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_ITERATOR_HPP_INCLUDED
@@ -1874,7 +1874,7 @@ struct sentinel_base
 
 #endif // LEXY_DETAIL_ITERATOR_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_ENCODING_HPP_INCLUDED
@@ -2647,14 +2647,15 @@ namespace _detail
         T value;
 
         explicit constexpr parse_context_var(T&& value)
-        : parse_context_var_base(&type_id), value(LEXY_MOV(value))
+        : parse_context_var_base(static_cast<const void*>(&type_id) /* NOLINT */),
+          value(LEXY_MOV(value))
         {}
 
         template <typename ControlBlock>
         static constexpr T& get(const ControlBlock* cb)
         {
             for (auto cur = cb->vars; cur; cur = cur->next)
-                if (cur->id == &type_id)
+                if (cur->id == static_cast<const void*>(&type_id) /* NOLINT */)
                     return static_cast<parse_context_var*>(cur)->value;
 
             LEXY_ASSERT(false, "context variable hasn't been created");
@@ -2872,13 +2873,13 @@ struct void_value_callback
 
 #endif // LEXY_ACTION_BASE_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_ACTION_VALIDATE_HPP_INCLUDED
 #define LEXY_ACTION_VALIDATE_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_ANY_REF_HPP_INCLUDED
@@ -2949,7 +2950,7 @@ private:
 
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_CALLBACK_CONTAINER_HPP_INCLUDED
@@ -3461,7 +3462,7 @@ constexpr auto collect(Callback&& callback)
 #endif // LEXY_CALLBACK_CONTAINER_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_ERROR_HPP_INCLUDED
@@ -4016,21 +4017,21 @@ struct validate_action
 };
 
 template <typename Production, typename Input, typename ErrorCallback>
-constexpr auto validate(const Input& input, const ErrorCallback& callback)
-    -> validate_result<ErrorCallback>
+constexpr auto validate(const Input&         input,
+                        const ErrorCallback& callback) -> validate_result<ErrorCallback>
 {
     return validate_action<void, Input, ErrorCallback>(callback)(Production{}, input);
 }
 
 template <typename Production, typename Input, typename State, typename ErrorCallback>
-constexpr auto validate(const Input& input, State& state, const ErrorCallback& callback)
-    -> validate_result<ErrorCallback>
+constexpr auto validate(const Input& input, State& state,
+                        const ErrorCallback& callback) -> validate_result<ErrorCallback>
 {
     return validate_action<State, Input, ErrorCallback>(state, callback)(Production{}, input);
 }
 template <typename Production, typename Input, typename State, typename ErrorCallback>
-constexpr auto validate(const Input& input, const State& state, const ErrorCallback& callback)
-    -> validate_result<ErrorCallback>
+constexpr auto validate(const Input& input, const State& state,
+                        const ErrorCallback& callback) -> validate_result<ErrorCallback>
 {
     return validate_action<const State, Input, ErrorCallback>(state, callback)(Production{}, input);
 }
@@ -4038,13 +4039,13 @@ constexpr auto validate(const Input& input, const State& state, const ErrorCallb
 
 #endif // LEXY_ACTION_VALIDATE_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_ANY_HPP_INCLUDED
 #define LEXY_DSL_ANY_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_SWAR_HPP_INCLUDED
@@ -4188,7 +4189,7 @@ constexpr std::size_t swar_find_difference(swar_int lhs, swar_int rhs)
 #elif defined(_MSC_VER)
     unsigned long bit_idx;
     if (!_BitScanForward64(&bit_idx, mask))
-        bit_idx         = 64;
+        bit_idx = 64;
 #else
 #    error "unsupported compiler; please file an issue"
 #endif
@@ -4292,13 +4293,13 @@ constexpr std::size_t round_size_for_swar(std::size_t size_in_bytes)
 #endif // LEXY_DETAIL_SWAR_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_TOKEN_HPP_INCLUDED
 #define LEXY_DSL_TOKEN_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_ACTION_MATCH_HPP_INCLUDED
@@ -4649,7 +4650,7 @@ inline constexpr auto token_kind_of<lexy::dsl::_any> = lexy::any_token_kind;
 
 #endif // LEXY_DSL_ANY_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_PARSE_TREE_HPP_INCLUDED
@@ -4658,7 +4659,7 @@ inline constexpr auto token_kind_of<lexy::dsl::_any> = lexy::any_token_kind;
 
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_MEMORY_RESOURCE_HPP_INCLUDED
@@ -4669,7 +4670,7 @@ inline constexpr auto token_kind_of<lexy::dsl::_any> = lexy::any_token_kind;
 
 #include <new>
 
-#if 0
+#if 0 // NOLINT
 // Subset of the interface of std::pmr::memory_resource.
 class MemoryResource
 {
@@ -4811,7 +4812,7 @@ constexpr MemoryResource* get_memory_resource()
 #endif // LEXY_DETAIL_MEMORY_RESOURCE_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_TOKEN_HPP_INCLUDED
@@ -4824,7 +4825,7 @@ constexpr MemoryResource* get_memory_resource()
 
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_LEXEME_HPP_INCLUDED
@@ -5193,8 +5194,8 @@ template <typename TokenKind, typename Reader,
 token(TokenKind, lexy::lexeme<Reader>) -> token<Reader, TokenKind>;
 template <typename TokenRule, typename Reader,
           typename = std::enable_if_t<_has_special_token_kind<TokenRule>>>
-token(TokenRule, lexy::lexeme<Reader>)
-    -> token<Reader, LEXY_DECAY_DECLTYPE(lexy::token_kind_of<TokenRule>)>;
+token(TokenRule,
+      lexy::lexeme<Reader>) -> token<Reader, LEXY_DECAY_DECLTYPE(lexy::token_kind_of<TokenRule>)>;
 
 template <typename Input, typename TokenKind = void>
 using token_for = token<lexy::input_reader<Input>, TokenKind>;
@@ -6660,8 +6661,8 @@ struct parse_as_tree_action
 template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
           typename ErrorCallback>
 auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
-                   const Input& input, const ErrorCallback& callback)
-    -> validate_result<ErrorCallback>
+                   const Input&                                                      input,
+                   const ErrorCallback& callback) -> validate_result<ErrorCallback>
 {
     return parse_as_tree_action<void, Input, ErrorCallback, TokenKind,
                                 MemoryResource>(tree, callback)(Production{}, input);
@@ -6669,8 +6670,8 @@ auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResour
 template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
           typename State, typename ErrorCallback>
 auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
-                   const Input& input, State& state, const ErrorCallback& callback)
-    -> validate_result<ErrorCallback>
+                   const Input& input, State& state,
+                   const ErrorCallback& callback) -> validate_result<ErrorCallback>
 {
     return parse_as_tree_action<State, Input, ErrorCallback, TokenKind,
                                 MemoryResource>(state, tree, callback)(Production{}, input);
@@ -6678,8 +6679,8 @@ auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResour
 template <typename Production, typename TokenKind, typename MemoryResource, typename Input,
           typename State, typename ErrorCallback>
 auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResource>& tree,
-                   const Input& input, const State& state, const ErrorCallback& callback)
-    -> validate_result<ErrorCallback>
+                   const Input& input, const State& state,
+                   const ErrorCallback& callback) -> validate_result<ErrorCallback>
 {
     return parse_as_tree_action<const State, Input, ErrorCallback, TokenKind,
                                 MemoryResource>(state, tree, callback)(Production{}, input);
@@ -6688,13 +6689,13 @@ auto parse_as_tree(parse_tree<lexy::input_reader<Input>, TokenKind, MemoryResour
 
 #endif // LEXY_ACTION_PARSE_AS_TREE_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_ACTION_TRACE_HPP_INCLUDED
 #define LEXY_ACTION_TRACE_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_NTTP_STRING_HPP_INCLUDED
@@ -6842,19 +6843,19 @@ struct macro_type_string
 #endif // LEXY_DETAIL_NTTP_STRING_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_INPUT_LOCATION_HPP_INCLUDED
 #define LEXY_INPUT_LOCATION_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_CODE_POINT_HPP_INCLUDED
 #define LEXY_DSL_CODE_POINT_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_CODE_POINT_HPP_INCLUDED
@@ -7243,13 +7244,13 @@ bool code_point_has_properties(char32_t cp); // not implemented
 #endif // LEXY_CODE_POINT_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_CHAR_CLASS_HPP_INCLUDED
 #define LEXY_DSL_CHAR_CLASS_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_CODE_POINT_HPP_INCLUDED
@@ -7352,7 +7353,7 @@ constexpr std::size_t encode_code_point(char32_t cp, typename Encoding::char_typ
     {
         LEXY_PRECONDITION(size >= 1);
 
-        *buffer = char32_t(cp);
+        *buffer = cp;
         return 1;
     }
     else
@@ -8005,7 +8006,8 @@ struct _calt : char_class_base<_calt<Cs...>>
                           // only match ASCII.
                           || ((!Cs::char_class_unicode()
                                || std::is_same_v<decltype(Cs::char_class_match_cp(0)),
-                                                 std::false_type>)&&...),
+                                                 std::false_type>)
+                              && ...),
                       "cannot mix bytes and Unicode char classes");
         return !non_unicode;
     }
@@ -8423,14 +8425,14 @@ inline constexpr auto token_kind_of<lexy::dsl::_cp<void>> = lexy::any_token_kind
 
 #endif // LEXY_DSL_CODE_POINT_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_NEWLINE_HPP_INCLUDED
 #define LEXY_DSL_NEWLINE_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_LITERAL_HPP_INCLUDED
@@ -8901,7 +8903,7 @@ struct _lcp : token_base<_lcp<Cp...>>, _lit_base
             auto begin = reader.position();
             auto index = lexy::_detail::range_size(begin, end.position());
             auto err   = lexy::error<Reader, lexy::expected_literal>(begin, _string<encoding>.data,
-                                                                   index, _string<encoding>.length);
+                                                                     index, _string<encoding>.length);
             context.on(_ev::error{}, err);
         }
     };
@@ -9070,9 +9072,8 @@ struct expected_newline
 
 namespace lexyd
 {
-struct _nl
-: LEXY_DECAY_DECLTYPE(literal_set(LEXY_LIT("\n"), LEXY_LIT("\r\n")).error<lexy::expected_newline>)
-{};
+struct _nl : LEXY_DECAY_DECLTYPE(
+                 literal_set(LEXY_LIT("\n"), LEXY_LIT("\r\n")).error<lexy::expected_newline>){};
 
 /// Matches a newline character.
 constexpr auto newline = _nl{};
@@ -9333,18 +9334,16 @@ private:
     unsigned _line_nr, _column_nr;
 
     template <typename C, typename I>
-    friend constexpr auto get_input_location(const I&                                 input,
-                                             typename lexy::input_reader<I>::iterator position,
-                                             input_location_anchor<I>                 anchor)
-        -> input_location<I, C>;
+    friend constexpr auto get_input_location(
+        const I& input, typename lexy::input_reader<I>::iterator position,
+        input_location_anchor<I> anchor) -> input_location<I, C>;
 };
 
 /// The location for a position in the input; search starts at the anchor.
 template <typename Counting, typename Input>
-constexpr auto get_input_location(const Input&                                 input,
-                                  typename lexy::input_reader<Input>::iterator position,
-                                  input_location_anchor<Input>                 anchor)
-    -> input_location<Input, Counting>
+constexpr auto get_input_location(
+    const Input& input, typename lexy::input_reader<Input>::iterator position,
+    input_location_anchor<Input> anchor) -> input_location<Input, Counting>
 {
     auto reader = input.reader();
     reader.reset(anchor._line_begin);
@@ -9542,10 +9541,9 @@ constexpr void _get_input_line_annotation(input_line_annotation<Input>&         
 }
 
 template <typename Input, typename Counting>
-constexpr auto get_input_line_annotation(const Input&                           input,
-                                         const input_location<Input, Counting>& begin_location,
-                                         typename lexy::input_reader<Input>::iterator end)
-    -> input_line_annotation<Input>
+constexpr auto get_input_line_annotation(
+    const Input& input, const input_location<Input, Counting>& begin_location,
+    typename lexy::input_reader<Input>::iterator end) -> input_line_annotation<Input>
 {
     input_line_annotation<Input> result{};
 
@@ -9612,7 +9610,7 @@ constexpr auto get_input_line_annotation(const Input&                           
 #endif // LEXY_INPUT_LOCATION_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_VISUALIZE_HPP_INCLUDED
@@ -9621,7 +9619,7 @@ constexpr auto get_input_line_annotation(const Input&                           
 #include <cstdio>
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_INPUT_RANGE_INPUT_HPP_INCLUDED
@@ -10873,14 +10871,14 @@ void trace(std::FILE* file, const Input& input, const State& state, visualizatio
 
 #endif // LEXY_ACTION_TRACE_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_HPP_INCLUDED
 #define LEXY_DSL_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_ASCII_HPP_INCLUDED
@@ -11394,7 +11392,7 @@ constexpr auto one_of = typename lexy::_detail::to_type_string<_one_of, Str>::ru
 
 #endif // LEXY_DSL_ASCII_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_BITS_HPP_INCLUDED
@@ -11546,7 +11544,7 @@ constexpr auto bits(Bits...)
 
 #endif // LEXY_DSL_BITS_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_BOM_HPP_INCLUDED
@@ -11593,7 +11591,7 @@ inline constexpr auto bom = _bom<Encoding, Endianness>{};
 
 #endif // LEXY_DSL_BOM_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_BRACKETS_HPP_INCLUDED
@@ -11601,21 +11599,21 @@ inline constexpr auto bom = _bom<Encoding, Endianness>{};
 
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_TERMINATOR_HPP_INCLUDED
 #define LEXY_DSL_TERMINATOR_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_BRANCH_HPP_INCLUDED
 #define LEXY_DSL_BRANCH_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_SEQUENCE_HPP_INCLUDED
@@ -11879,7 +11877,7 @@ inline constexpr auto else_ = _else_dsl{};
 
 #endif // LEXY_DSL_BRANCH_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_ERROR_HPP_INCLUDED
@@ -12007,20 +12005,20 @@ constexpr auto must(Branch)
 
 #endif // LEXY_DSL_ERROR_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_RECOVER_HPP_INCLUDED
 #define LEXY_DSL_RECOVER_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_CHOICE_HPP_INCLUDED
 #define LEXY_DSL_CHOICE_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_TUPLE_HPP_INCLUDED
@@ -12240,7 +12238,7 @@ struct _chc
 
                 // LEXY_FWD(args) will break MSVC builds targeting C++17.
                 result = parser.template finish<NextParser>(context, reader,
-                                                            static_cast<Args&&>(args)...);
+                                                             static_cast<Args&&>(args)...);
                 return true;
             };
 
@@ -12294,7 +12292,7 @@ constexpr auto operator|(_chc<R...>, _chc<S...>)
 #endif // LEXY_DSL_CHOICE_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_LOOKAHEAD_HPP_INCLUDED
@@ -12769,7 +12767,7 @@ constexpr auto try_(Rule, Recover)
 #endif // LEXY_DSL_RECOVER_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_WHITESPACE_HPP_INCLUDED
@@ -12779,7 +12777,7 @@ constexpr auto try_(Rule, Recover)
 
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_LOOP_HPP_INCLUDED
@@ -13422,7 +13420,7 @@ constexpr auto parenthesized = round_bracketed;
 #endif // LEXY_DSL_BRACKETS_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_BYTE_HPP_INCLUDED
@@ -13821,7 +13819,7 @@ inline constexpr auto big_bint64    = _bint<8, lexy::_detail::bint_big>{};
 } // namespace lexyd
 
 #endif // LEXY_DSL_BYTE_HPP_INCLUDED
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_CAPTURE_HPP_INCLUDED
@@ -13964,7 +13962,7 @@ constexpr auto capture(_prd<Production>)
 
 #endif // LEXY_DSL_CAPTURE_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_CASE_FOLDING_HPP_INCLUDED
@@ -14270,7 +14268,7 @@ inline constexpr auto simple_case_folding = _scf_dsl{};
 
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_COMBINATION_HPP_INCLUDED
@@ -14423,7 +14421,7 @@ constexpr auto partial_combination(R...)
 
 #endif // LEXY_DSL_COMBINATION_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_CONTEXT_COUNTER_HPP_INCLUDED
@@ -14691,7 +14689,7 @@ constexpr auto equal_counts(_ctx_counter_dsl<Ids>...)
 
 #endif // LEXY_DSL_CONTEXT_COUNTER_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_CONTEXT_FLAG_HPP_INCLUDED
@@ -14844,7 +14842,7 @@ constexpr auto context_flag = _ctx_flag_dsl<Id>{};
 
 #endif // LEXY_DSL_CONTEXT_FLAG_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_CONTEXT_IDENTIFIER_HPP_INCLUDED
@@ -14852,7 +14850,7 @@ constexpr auto context_flag = _ctx_flag_dsl<Id>{};
 
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_IDENTIFIER_HPP_INCLUDED
@@ -15435,7 +15433,7 @@ constexpr auto context_identifier(_id<Leading, Trailing, Reserved...>)
 
 #endif // LEXY_DSL_CONTEXT_IDENTIFIER_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_DELIMITED_HPP_INCLUDED
@@ -15446,7 +15444,7 @@ constexpr auto context_identifier(_id<Leading, Trailing, Reserved...>)
 
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_SYMBOL_HPP_INCLUDED
@@ -16448,7 +16446,7 @@ constexpr auto dollar_escape    = escape(lit_c<'$'>);
 
 #endif // LEXY_DSL_DELIMITED_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_DIGIT_HPP_INCLUDED
@@ -17169,7 +17167,7 @@ constexpr auto effect = _eff<Fn>{};
 
 #endif // LEXY_DSL_EFFECT_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_EOF_HPP_INCLUDED
@@ -17246,7 +17244,7 @@ constexpr auto eof = _eof{};
 #endif // LEXY_DSL_EOF_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_EXPRESSION_HPP_INCLUDED
@@ -17255,7 +17253,7 @@ constexpr auto eof = _eof{};
 
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_OPERATOR_HPP_INCLUDED
@@ -18179,7 +18177,7 @@ struct subexpression_production : Expr
 
 #endif // LEXY_DSL_EXPRESSION_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_FLAGS_HPP_INCLUDED
@@ -18320,7 +18318,7 @@ constexpr auto flag(Rule rule)
 
 #endif // LEXY_DSL_FLAGS_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_FOLLOW_HPP_INCLUDED
@@ -18443,7 +18441,7 @@ constexpr auto token_kind_of<lexy::dsl::_nf<Literal, CharClass>> = lexy::literal
 #endif // LEXY_DSL_FOLLOW_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_IF_HPP_INCLUDED
@@ -18492,7 +18490,7 @@ constexpr auto if_(Branch)
 
 #endif // LEXY_DSL_IF_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_INTEGER_HPP_INCLUDED
@@ -19050,7 +19048,7 @@ template <typename Encoding, std::size_t N, typename Base = hex>
 constexpr auto code_unit_id = [] {
     using char_type = typename Encoding::char_type;
     using type      = std::conditional_t<_ndigits_can_overflow<char_type, N, Base::digit_radix>(),
-                                    char_type, lexy::unbounded<char_type>>;
+                                         char_type, lexy::unbounded<char_type>>;
     using parser    = _integer_parser<type, Base, true>;
     return _int<_ndigits<N, Base>, parser, lexy::invalid_code_unit>{};
 }();
@@ -19058,7 +19056,7 @@ constexpr auto code_unit_id = [] {
 
 #endif // LEXY_DSL_INTEGER_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_LIST_HPP_INCLUDED
@@ -19066,7 +19064,7 @@ constexpr auto code_unit_id = [] {
 
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_OPTION_HPP_INCLUDED
@@ -19186,7 +19184,7 @@ struct _optt : rule_base
 
 #endif // LEXY_DSL_OPTION_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_SEPARATOR_HPP_INCLUDED
@@ -19766,13 +19764,13 @@ struct _lstt : rule_base
 
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_MEMBER_HPP_INCLUDED
 #define LEXY_DSL_MEMBER_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_STATELESS_LAMBDA_HPP_INCLUDED
@@ -19939,14 +19937,14 @@ constexpr auto member = _mem_dsl<lexy::_mem_ptr_fn<MemPtr>>{};
 
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_PARSE_AS_HPP_INCLUDED
 #define LEXY_DSL_PARSE_AS_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_CALLBACK_OBJECT_HPP_INCLUDED
@@ -20192,7 +20190,7 @@ constexpr auto parse_as(Rule)
 
 #endif // LEXY_DSL_PARSE_AS_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_PEEK_HPP_INCLUDED
@@ -20372,7 +20370,7 @@ constexpr auto peek_not(Rule)
 
 #endif // LEXY_DSL_PEEK_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_POSITION_HPP_INCLUDED
@@ -20455,7 +20453,7 @@ constexpr auto position = _pos_dsl{};
 
 #endif // LEXY_DSL_POSITION_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_PRODUCTION_HPP_INCLUDED
@@ -20704,7 +20702,7 @@ constexpr auto recurse_branch = _recb<Production>{};
 
 #endif // LEXY_DSL_PRODUCTION_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_PUNCTUATOR_HPP_INCLUDED
@@ -20751,7 +20749,7 @@ LEXY_PUNCT(equal_sign, "=");
 #endif // LEXY_DSL_PUNCTUATOR_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_REPEAT_HPP_INCLUDED
@@ -20881,8 +20879,7 @@ struct _repc : rule_base // repeat, capture
 };
 
 template <typename Count, typename Loop>
-struct _rep : decltype(_maybe_branch(_pas<std::size_t, Count, true>{}, Loop{}))
-{};
+struct _rep : decltype(_maybe_branch(_pas<std::size_t, Count, true>{}, Loop{})){};
 
 template <typename Count>
 struct _rep_dsl
@@ -20934,7 +20931,7 @@ constexpr auto repeat(Count)
 
 #endif // LEXY_DSL_REPEAT_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_RETURN_HPP_INCLUDED
@@ -20958,13 +20955,13 @@ constexpr auto return_ = _ret{};
 
 #endif // LEXY_DSL_RETURN_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_SCAN_HPP_INCLUDED
 #define LEXY_DSL_SCAN_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_CALLBACK_FORWARD_HPP_INCLUDED
@@ -21529,7 +21526,7 @@ struct scan_production
 
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_SIGN_HPP_INCLUDED
@@ -21687,7 +21684,7 @@ constexpr auto subgrammar = _subg<Production, T>{};
 #endif // LEXY_DSL_SUBGRAMMAR_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_TIMES_HPP_INCLUDED
@@ -21756,7 +21753,7 @@ constexpr auto twice(Rule rule, Sep sep)
 #endif // LEXY_DSL_TIMES_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_UNICODE_HPP_INCLUDED
@@ -22253,7 +22250,7 @@ inline constexpr auto xid_continue = _xid_continue{};
 
 #endif // LEXY_DSL_UNICODE_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_UNTIL_HPP_INCLUDED
@@ -22413,7 +22410,7 @@ constexpr auto token_kind_of<lexy::dsl::_until<Condition>> = lexy::any_token_kin
 
 
 #if LEXY_EXPERIMENTAL
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DSL_PARSE_TREE_NODE_HPP_INCLUDED
@@ -22669,14 +22666,14 @@ constexpr auto pnode = _pn<Production>{};
 #endif // LEXY_DSL_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_EXT_COMPILER_EXPLORER_HPP_INCLUDED
 #define LEXY_EXT_COMPILER_EXPLORER_HPP_INCLUDED
 
 #include <cstdio>
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_DETAIL_BUFFER_BUILDER_HPP_INCLUDED
@@ -22837,7 +22834,7 @@ private:
 #endif // LEXY_DETAIL_BUFFER_BUILDER_HPP_INCLUDED
 
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_INPUT_BUFFER_HPP_INCLUDED
@@ -23143,11 +23140,11 @@ template <typename View>
 buffer(const View&) -> buffer<deduce_encoding<LEXY_DECAY_DECLTYPE(*LEXY_DECLVAL(View).data())>>;
 
 template <typename CharT, typename MemoryResource>
-buffer(const CharT*, const CharT*, MemoryResource*)
-    -> buffer<deduce_encoding<CharT>, MemoryResource>;
+buffer(const CharT*, const CharT*,
+       MemoryResource*) -> buffer<deduce_encoding<CharT>, MemoryResource>;
 template <typename CharT, typename MemoryResource>
-buffer(const CharT*, std::size_t, MemoryResource*)
-    -> buffer<deduce_encoding<CharT>, MemoryResource>;
+buffer(const CharT*, std::size_t,
+       MemoryResource*) -> buffer<deduce_encoding<CharT>, MemoryResource>;
 template <typename View, typename MemoryResource>
 buffer(const View&, MemoryResource*)
     -> buffer<deduce_encoding<LEXY_DECAY_DECLTYPE(*LEXY_DECLVAL(View).data())>, MemoryResource>;
@@ -23394,7 +23391,7 @@ using compiler_explorer_error_context = lexy::buffer_error_context<Production, l
 
 #endif // LEXY_EXT_COMPILER_EXPLORER_HPP_INCLUDED
 
-// Copyright (C) 2020-2024 Jonathan Müller and lexy contributors
+// Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 // SPDX-License-Identifier: BSL-1.0
 
 #ifndef LEXY_EXT_REPORT_ERROR_HPP_INCLUDED
