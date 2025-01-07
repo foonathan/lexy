@@ -66,13 +66,8 @@ namespace ast
 TEST_CASE("field")
 {
     auto parse = [](auto... bytes) {
-        // We're leaking memory, but that's okay.
-        auto array = new unsigned char[sizeof...(bytes)];
-        {
-            auto idx = 0;
-            ((array[idx++] = static_cast<unsigned char>(bytes)), ...);
-        }
-        auto input = lexy::string_input(array, sizeof...(bytes));
+        std::vector<unsigned char> vec{static_cast<unsigned char>(bytes)...};
+        auto                       input = lexy::string_input(vec.data(), vec.size());
         return lexy::parse<grammar::field>(input, lexy::noop);
     };
 

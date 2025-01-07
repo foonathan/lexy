@@ -192,6 +192,8 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     target_compile_options(lexy_dev INTERFACE -Wno-unused-local-typedefs)
     # GCC's arry bounds, maybe uninitialized, and restrict warning seems to have false positives.
     target_compile_options(lexy_dev INTERFACE -Wno-array-bounds -Wno-maybe-uninitialized -Wno-restrict)
+    # GCC doesn't like it when rules depend on `static` objects.
+    target_compile_options(lexy_dev INTERFACE -Wno-subobject-linkage)
 elseif(MSVC)
     target_compile_options(lexy_dev INTERFACE /WX /W3 /D _CRT_SECURE_NO_WARNINGS /wd5105 /utf-8)
 endif()
