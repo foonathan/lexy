@@ -14,7 +14,7 @@
     {{- end -}}
     </title>
 
-    {{ $style := resources.Get "css/style.scss" | resources.ToCSS | resources.Minify }}
+    {{ $style := resources.Get "css/style.scss" | css.Sass | resources.Minify }}
     <style>{{ $style.Content | safeCSS }}</style>
 </head>
 <body>

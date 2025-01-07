@@ -56,7 +56,7 @@
     {{ .Content }}
 </section>
 
-{{ $style := resources.Get "css/playground.scss" | resources.ToCSS | resources.Minify }}
+{{ $style := resources.Get "css/playground.scss" | css.Sass | resources.Minify }}
 <style>{{ $style.Content | safeCSS }}</style>
 
 {{ $playground := resources.Get "js/playground.js" | resources.ExecuteAsTemplate "playground.js" .  | resources.Minify }}
