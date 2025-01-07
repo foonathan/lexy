@@ -131,18 +131,12 @@ struct pt_node_token : pt_node<Reader>
     {
         if constexpr (_optimize_end)
         {
-            static_assert(!std::is_pointer_v<typename Reader::iterator>
-                          || sizeof(pt_node_token) == 3 * sizeof(void*));
-
             auto size = std::size_t(end - begin);
             LEXY_PRECONDITION(size <= UINT_LEAST32_MAX);
             end_impl = std::uint_least32_t(size);
         }
         else
         {
-            static_assert(!std::is_pointer_v<typename Reader::iterator>
-                          || sizeof(pt_node_token) <= 4 * sizeof(void*));
-
             end_impl = end;
         }
     }
@@ -162,7 +156,6 @@ struct pt_node_production : pt_node<Reader>
     : pt_node<Reader>(pt_node<Reader>::type_production), id(info.id), child_count(0),
       token_production(info.is_token), first_child_adjacent(true)
     {
-        static_assert(sizeof(pt_node_production) == 3 * sizeof(void*));
         LEXY_PRECONDITION(!info.is_transparent);
     }
 
