@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ["gcc:7", "gcc:13", "clang:6", "clang:16"]
+        image: ["gcc:7", "gcc:14", "clang:6", "clang:18"]
 
     runs-on: ubuntu-latest
     container:
@@ -35,9 +35,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        xcode: ['14', '15']
+        xcode: ['15', '16']
 
-    runs-on: macos-13
+    runs-on: macos-14
 
     steps:
     - uses: actions/checkout@v2

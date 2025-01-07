@@ -6,7 +6,7 @@ title: Building lexy and integrating it in your own projects
 
 The library uses CMake (3.8 or higher) as its build system.
 It requires a compiler that supports {cpp}17, but works best with {cpp}20.
-It is tested with GCC 7 and higher, clang 6 and higher, the latest MSVC and clang-cl.
+It is tested with GCC 7 and higher, clang 6 and higher, MSVC v142 and clang-cl.
 Other compilers may work as well.
 
 == Basic integration
