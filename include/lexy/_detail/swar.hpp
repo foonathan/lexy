@@ -139,10 +139,14 @@ constexpr std::size_t swar_find_difference(swar_int lhs, swar_int rhs)
 
 #if defined(__GNUC__)
     auto bit_idx = __builtin_ctzll(mask);
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && defined(_WIN64)
     unsigned long bit_idx;
-    if (!_BitScanForward64(&bit_idx, mask))
-        bit_idx = 64;
+    _BitScanForward64(&bit_idx, mask);
+#elif defined(_MSC_VER)
+    unsigned long bit_idx = 0;
+    if (!_BitScanForward(&bit_idx, static_cast<std::uint32_t>(mask))
+        && _BitScanForward(&bit_idx, mask >> 32))
+        bit_idx += 32;
 #else
 #    error "unsupported compiler; please file an issue"
 #endif

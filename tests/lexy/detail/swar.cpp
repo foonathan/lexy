@@ -74,6 +74,7 @@ TEST_CASE("swar_find_difference")
     CHECK(swar_find_difference<char>(a, a) == 8);
     CHECK(swar_find_difference<char>(a, A) == 0);
     CHECK(swar_find_difference<char>(abc, aBc) == 1);
+    CHECK(swar_find_difference<char>(0x1'FFFF'FFFF, 0x2'FFFF'FFFF) == 4);
 }
 
 TEST_CASE("swar_has_zero")
