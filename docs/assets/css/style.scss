@@ -458,21 +458,21 @@ article {
 // code highlight
 .highlight, .ace_editor {
     // comment
-    .tok-c, .tok-cm, .tok-cp, .tok-c1, .tok-cs {
+    .c, .cm, .cp, .c1, .cs {
         color: #999988;
         font-style: italic;
         font-weight: initial;
     }
 
     // keyword
-    .tok-k, .tok-kc, .tok-kd, .tok-kp, .tok-kr, .tok-kt,
+    .k, .kc, .kd, .kp, .kr, .kt,
     .ace_storage, .ace_keyword, {
         color: #445588;
         font-style: initial;
         font-weight: bold;
     }
     // operator, punctuator
-    .tok-o, .tok-p,
+    .o, .p,
     .ace_keyword.ace_operator, .ace_paren, .ace_punctuation {
         color: #ff0000;
         font-style: initial;
@@ -485,29 +485,29 @@ article {
     }
 
     // number
-    .tok-m, .tok-mf, .tok-mh, .tok-mi, .tok-mo,
+    .m, .mf, .mh, .mi, .mo,
     .ace_constant {
         color: #FF8000;
         font-style: initial;
         font-weight: initial;
     }
     // string
-    .tok-s, .tok-sb, .tok-sc, .tok-sd, .tok-s2, .tok-s3,
-    .tok-sh, .tok-si, .tok-sx, .tok-sr, .tok-s1, .tok-ss, .tok-se,
+    .s, .sb, .sc, .sd, .s2, .s3,
+    .sh, .si, .sx, .sr, .s1, .ss, .se,
     .ace_string {
         color: #008000;
         font-style: initial;
         font-weight: initial;
     }
     // preprocessor
-    .tok-cp, .tok-cpf {
+    .cp, .cpf {
         color: #008000;
         font-style: initial;
         font-weight: bold;
     }
 
     // error
-    .tok-err,
+    .err,
     .ace_invalid {
         color: #ff0000;
         font-style: initial;

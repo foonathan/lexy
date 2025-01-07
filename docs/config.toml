@@ -7,8 +7,9 @@ disableKinds = ["RSS", "taxonomy"]
 
 [markup.tableOfContents]
 endLevel = 3
+
 [markup.asciidocExt.attributes]
-source-highlighter = "pygments"
+source-highlighter = 'rouge'
 
 [security.exec]
 allow = ['^asciidoctor$']
