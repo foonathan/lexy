@@ -162,7 +162,7 @@ public:
     {
         if (lhs._line_nr != rhs._line_nr)
             return lhs._line_nr < rhs._line_nr;
-        return lhs._column_nr < rhs._colum_nr;
+        return lhs._column_nr < rhs._column_nr;
     }
     friend constexpr bool operator<=(const input_location& lhs, const input_location& rhs)
     {
