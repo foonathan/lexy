@@ -1,40 +1,22 @@
-cmake_minimum_required(VERSION 3.18)
+# Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
+# SPDX-License-Identifier: BSL-1.0
 
-set(BASE_FLAGS -O2 -ggdb -fno-omit-frame-pointer)
-
-if(FORCE_STATIC_LINKING)
-    set(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
-    set(BUILD_SHARED_LIBS OFF)
+# Only process this file if fuzzing is enabled
+if(NOT LEXY_BUILD_FUZZERS)
+    return()
 endif()
 
-# Handle fuzzing-specific settings
-if(LEXY_FUZZING_ENGINE STREQUAL "libfuzzer")
-    # For libFuzzer, use fuzzer-no-link for the library
-    set(SANITIZER_FLAGS
-        -fsanitize=address,undefined,fuzzer-no-link
-    )
+# Create directories for corpus and artifacts
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/corpus)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/artifacts)
 
-    set(FUZZING_FLAGS
-        -fsanitize=fuzzer,address,undefined
-    )
-else()  # AFL
-    set(SANITIZER_FLAGS
-        -fsanitize=address,undefined
-    )
-
-    set(FUZZING_FLAGS
-        -fsanitize=fuzzer
-    )
-endif()
-
-add_compile_options(${BASE_FLAGS} ${SANITIZER_FLAGS})
-add_link_options(${BASE_FLAGS} ${SANITIZER_FLAGS})
-
+# Wrapper around the add_fuzzer function that adds lexy-specific configuration
 function(add_lexy_fuzzer TARGET_NAME SOURCE_FILE EXAMPLE_FILE SEED_CONTENT)
-    # Create corpus directories
+    # Create corpus directories for this specific fuzzer
     file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}_corpus)
     file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}_artifacts)
 
+    # Copy example file if it exists
     if(EXISTS "${CMAKE_SOURCE_DIR}/examples/${EXAMPLE_FILE}")
         configure_file(
             ${CMAKE_SOURCE_DIR}/examples/${EXAMPLE_FILE}
@@ -43,76 +25,32 @@ function(add_lexy_fuzzer TARGET_NAME SOURCE_FILE EXAMPLE_FILE SEED_CONTENT)
         )
     endif()
 
+    # Create seed content
     file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}_corpus/simple.${TARGET_NAME}
         "${SEED_CONTENT}"
     )
 
-    add_executable(${TARGET_NAME} ${SOURCE_FILE})
-
-    target_compile_options(${TARGET_NAME} PRIVATE
-        ${BASE_FLAGS}
-        ${SANITIZER_FLAGS}
-        ${FUZZING_FLAGS}
-    )
-
-    # Handle static linking options
-    if(FORCE_STATIC_LINKING)
-        if(LEXY_FUZZING_ENGINE STREQUAL "libfuzzer")
-            target_link_options(${TARGET_NAME} PRIVATE
-                ${BASE_FLAGS}
-                ${FUZZING_FLAGS}
-                ${SANITIZER_FLAGS}
-                -static-libstdc++
-                -static-libgcc
-            )
-        else() # AFL
-            target_link_options(${TARGET_NAME} PRIVATE
-                ${BASE_FLAGS}
-                ${SANITIZER_FLAGS}
-                ${FUZZING_FLAGS}
-                -static-libstdc++
-                -static-libgcc
-            )
-        endif()
-    else()
-        target_link_options(${TARGET_NAME} PRIVATE
-            ${BASE_FLAGS}
-            ${SANITIZER_FLAGS}
-            ${FUZZING_FLAGS}
-        )
-    endif()
-
-    # Link against the libraries
-    if(FORCE_STATIC_LINKING)
-        target_link_libraries(${TARGET_NAME}
-            PRIVATE
-            -static-libstdc++
-            -static-libgcc
+    # Add the fuzzer using our common function from Fuzzing.cmake
+    add_fuzzer(${TARGET_NAME}
+        SOURCES
+            ${SOURCE_FILE}
+        INCLUDES
+            ${CMAKE_CURRENT_SOURCE_DIR}/../include
+            ${CMAKE_CURRENT_BINARY_DIR}
+        LIBRARIES
             lexy_core
             lexy_file
             lexy_unicode
-        )
-    else()
-        target_link_libraries(${TARGET_NAME}
-            PRIVATE
-            lexy_core
-            lexy_file
-            lexy_unicode
-        )
-    endif()
-
-    target_include_directories(${TARGET_NAME}
-        PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/../include
-        ${CMAKE_CURRENT_BINARY_DIR}
     )
 
+    # Set output directory
     set_target_properties(${TARGET_NAME}
         PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     )
 endfunction()
 
+# Add the fuzzers
 add_lexy_fuzzer(
     json_fuzzer
     json_fuzzer.cpp
