@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # Generate the header file containing the Unicode database.
 # It uses the three stage approach described e.g. here https://here-be-braces.com/fast-lookup-of-unicode-properties/.
 # For case folding, it stores the offset to the simple case folded code point.
