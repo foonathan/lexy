@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # Replaces all lexy includes of the input file with the header contents, recursively.
 # As an optimization, it does not resolve the same header twice.
 
