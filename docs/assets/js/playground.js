@@ -1,4 +1,4 @@
-const api = "https://godbolt.org/api/";
+const compiler_explorer_host = "https://godbolt.org";
 const compiler_id = "clang_trunk";
 const lexy_id = { id: 'lexy', version: 'trunk' };
 
@@ -78,7 +78,8 @@ export async function compile_and_run(source, input, mode)
 
     body.lang = "c++";
 
-    const response = await fetch(`${api}/compiler/${compiler_id}/compile`, {
+    const url = new URL(`/api/compiler/${compiler_id}/compile`, compiler_explorer_host);
+    const response = await fetch(url, {
         method: "POST",
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: json_stringify(body)
@@ -129,7 +130,8 @@ function get_godbolt_clientstate(source, input)
 export async function get_godbolt_permalink(source, input)
 {
     const state = get_godbolt_clientstate(source, input);
-    const response = await fetch(api + "shortener", {
+    const url = new URL(`/api/shortener`, compiler_explorer_host);
+    const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Accept": "application/json" },
         body: json_stringify(state)
@@ -143,7 +145,8 @@ export function get_godbolt_url(source, input)
 {
     const state = get_godbolt_clientstate(source, input);
     const state_str = json_stringify(state);
-    return "https://godbolt.org/clientstate/" + encodeURIComponent(btoa(state_str));
+    const encoded_state = encodeURIComponent(btoa(state_str));
+    return new URL(`/clientstate/${encoded_state}`, compiler_explorer_host);
 }
 
 export async function load_example(url)
@@ -159,7 +162,8 @@ export async function load_example(url)
 
 export async function load_godbolt_url(id)
 {
-    const response = await fetch(api + "shortlinkinfo/" + id);
+    const url = new URL(`/api/shortlinkinfo/${id}`, compiler_explorer_host);
+    const response = await fetch(url);
     if (!response.ok)
         return { grammar: "", input: "", production: "" };
     const result = await response.json();
