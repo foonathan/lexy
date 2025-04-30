@@ -193,8 +193,11 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     target_compile_options(lexy_dev INTERFACE -Wno-parentheses)
     # GCC doesn't properly detect when local typedefs escape via the return type.
     target_compile_options(lexy_dev INTERFACE -Wno-unused-local-typedefs)
-    # GCC's arry bounds, maybe uninitialized, and restrict warning seems to have false positives.
+    # GCC's array bounds, maybe uninitialized, dangling pointer, and restrict warning seems to have false positives.
     target_compile_options(lexy_dev INTERFACE -Wno-array-bounds -Wno-maybe-uninitialized -Wno-restrict)
+    if(${CMAKE_CXX_COMPILER_VERSION} VERSION_GREATER 12)
+        target_compile_options(lexy_dev INTERFACE -Wno-dangling-pointer)
+    endif()
     # GCC doesn't like it when rules depend on `static` objects.
     target_compile_options(lexy_dev INTERFACE -Wno-subobject-linkage)
 elseif(MSVC)
