@@ -1,6 +1,6 @@
 = Changelog
 
-== Upcoming
+== Release 2025.05.0
 
 === Potential breaking changes
 
