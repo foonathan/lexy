@@ -34,10 +34,13 @@
                 {{ (resources.Get "icons/edit.svg").Content | safeHTML }} Edit this page
             </a>
 
+            <div class="spacer"></div>
+
             <form class="search" id="dsl-goto-form">
                 <input type="search" id="dsl-goto-search" placeholder="Go to..." list="dsl-goto-data" autocomplete="off">
                 <button type="submit" title="Go">{{ (resources.Get "icons/arrow-right.svg").Content | safeHTML }}</button>
             </form>
+            <a href="{{ .Parent.RelPermalink }}" title="{{ .Parent.Title | default .Parent.Params.header | default .Site.Title }}">{{ (resources.Get "icons/arrow-up.svg").Content | safeHTML }}</a>
         </nav>
     </header>
 

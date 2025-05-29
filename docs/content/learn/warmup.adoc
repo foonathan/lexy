@@ -1,5 +1,6 @@
 ---
 title: Warming up — the first parser
+weight: 2
 ---
 :toc: left
 

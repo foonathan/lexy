@@ -1,5 +1,6 @@
 ---
 title: Branching, backtracking and making decisions — lexy is not declarative
+weight: 3
 ---
 :toc: left
 

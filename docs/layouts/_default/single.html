@@ -13,6 +13,16 @@
             <a href="{{ .Site.Params.github_edit_prefix }}/docs/content/{{ .File.Path }}">
                 {{ (resources.Get "icons/edit.svg").Content | safeHTML }} Edit this page
             </a>
+
+            <div class="spacer"></div>
+
+            {{ if .NextInSection }}
+                <a href="{{ .NextInSection.RelPermalink }}" title="{{ .NextInSection.Title }}">{{ (resources.Get "icons/arrow-left.svg").Content | safeHTML }}</a>
+            {{ end }}
+            <a href="{{ .Parent.RelPermalink }}" title="{{ .Parent.Title | default .Site.Title }}">{{ (resources.Get "icons/arrow-up.svg").Content | safeHTML }}</a>
+            {{ if .PrevInSection }}
+                <a href="{{ .PrevInSection.RelPermalink }}" title="{{ .PrevInSection.Title }}">{{ (resources.Get "icons/arrow-right.svg").Content | safeHTML }}</a>
+            {{ end }}
         </nav>
     </header>
 

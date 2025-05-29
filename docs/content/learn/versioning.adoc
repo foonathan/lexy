@@ -1,5 +1,6 @@
 ---
 title: Versioning and compatibility policy
+weight: 6
 ---
 
 lexy uses https://calver.org[calender versioning] according to the following schema:

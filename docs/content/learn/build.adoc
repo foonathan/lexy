@@ -1,5 +1,6 @@
 ---
 title: Building lexy and integrating it in your own projects
+weight: 1
 ---
 :toc: left
 :toclevels: 1

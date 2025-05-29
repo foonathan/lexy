@@ -13,6 +13,7 @@ add_custom_command(OUTPUT content/_index.adoc
 add_custom_command(OUTPUT content/learn/changelog.adoc
         COMMAND ${CMAKE_COMMAND} -E echo "---"              >  content/learn/changelog.adoc
         COMMAND ${CMAKE_COMMAND} -E echo "title: Changelog" >> content/learn/changelog.adoc
+        COMMAND ${CMAKE_COMMAND} -E echo "weight: 5"        >> content/learn/changelog.adoc
         COMMAND ${CMAKE_COMMAND} -E echo "---"              >> content/learn/changelog.adoc
         COMMAND ${CMAKE_COMMAND} -E cat ../CHANGELOG.adoc   >> content/learn/changelog.adoc
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

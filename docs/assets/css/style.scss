@@ -254,15 +254,19 @@ article {
             display: flex;
             flex-wrap: wrap;
 
+            .spacer {
+                @media(min-width: 700px) {
+                    margin-left: auto;
+                    margin-right: auto;
+                }
+            }
+
             a {
                 text-decoration: none;
                 padding-right: 7px;
             }
-
             form.search {
-                @media(min-width: 700px) {
-                    margin-left: auto;
-                }
+                padding-right: 7px;
 
                 input[type=search] {
                     padding: 2px;

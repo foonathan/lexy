@@ -1,5 +1,6 @@
 ---
 title: Walkthrough — parser for custom package format
+weight: 4
 ---
 :toc: left
 :toclevels: 1
