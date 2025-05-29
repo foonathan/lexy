@@ -13,7 +13,8 @@ Rules for parsing a {{% docref "lexy::parse_tree_input" %}}.
 {{% godbolt-example "parse_tree_parsing" "Re-parse a parse tree" %}}
 
 [#tnode]
-== Rule DSL `lexy::dsl::tnode` {{< experimental >}}
+== Rule DSL `lexy::dsl::tnode`
+{{< experimental >}}
 
 {{% interface %}}
 ----
@@ -77,7 +78,8 @@ Errors::
 NOTE: `lexeme_rule` matches characters, not other nodes.
 
 [#pnode]
-== Rule DSL `lexy::dsl::pnode` {{< experimental >}}
+== Rule DSL `lexy::dsl::pnode`
+{{< experimental >}}
 
 {{% interface %}}
 ----

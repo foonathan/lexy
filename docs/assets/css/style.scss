@@ -281,6 +281,15 @@ article {
         }
     }
 
+    div.experimental {
+        position: relative;
+        i {
+            position: absolute;
+            top: -2.3em;
+            left: -1.2em;
+        }
+    }
+
     .lead p {
         font-weight: 500;
         font-size: 1.1em;
