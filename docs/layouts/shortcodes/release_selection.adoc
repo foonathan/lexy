@@ -14,12 +14,14 @@ FetchContent_MakeAvailable(lexy)
 
 ++++
 <script>
-  document.getElementById('release-selection').addEventListener('change', function() {
-      for (var tag of document.getElementsByClassName('tok-s'))
-          if (tag.innerHTML == "URL" && tag.previousSibling.previousSibling.innerHTML == "lexy") {
-              tag.nextSibling.nextSibling.innerHTML = this.value;
-          }
+  var select = document.getElementById('release-selection');
+  select.addEventListener('change', function() {
+      console.log("change");
+      for (var code of document.getElementsByTagName('code')) {
+          code.innerHTML = code.innerHTML.replace(/lexy URL https:\/\/.*zip/g, "lexy URL " + this.value);
+      }
   });
+  select.dispatchEvent(new Event('change'));
 </script>
 ++++
 
