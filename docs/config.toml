@@ -6,6 +6,7 @@ copyright = "2020-2025 Jonathan Müller and lexy contributors"
 disableKinds = ["RSS", "taxonomy"]
 
 [markup.tableOfContents]
+startLevel = 2
 endLevel = 3
 
 [markup.asciidocExt.attributes]
