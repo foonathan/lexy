@@ -164,6 +164,9 @@ Errors::
 
 NOTE: `groups` can be used in the top-level `operation` of an expression as well.
 
+NOTE: `groups` are not inherited. If you have a group whose operands are another group it is in an error if both the child group and the parent group have operations in the expression.
+The only way to use operations from the child group, if the parent group does not use any of its operators.
+
 [#infix_op_left]
 == Operation base `lexy::dsl::infix_op_left`
 
