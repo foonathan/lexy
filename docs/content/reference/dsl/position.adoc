@@ -34,9 +34,11 @@ Parse tree::
   A single token node, whose range is begins and ends at its position, with the {{% docref "lexy::predefined_token_kind" %}} `lexy::position_token_node`,
   followed by all nodes produced by `rule`.
 
-{{% playground-example position "Determine the position of a function declaration" %}}
+{{% godbolt-example position "Determine the position of a function declaration" %}}
 
 NOTE: As a rule, `position` does not do {{% docref whitespace %}} skipping.
 If used immediately before a {{% token-rule %}} it will produce the position that is the beginning of this token,
 because whitespace skipping is done _after_ token rules.
+
+TIP: Use {{% docref "lexy::get_input_location" %}} to turn the position into a location, which has actual line and column numbers.
 
