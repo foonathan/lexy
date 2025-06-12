@@ -116,7 +116,7 @@ struct _ctx_cpush : _copy_base<Rule>
     };
 };
 
-template <typename Id, int Value>
+template <typename Id, typename Pred>
 struct _ctx_cis : branch_base
 {
     template <typename Reader>
@@ -125,7 +125,7 @@ struct _ctx_cis : branch_base
         template <typename ControlBlock>
         constexpr bool try_parse(const ControlBlock* cb, const Reader&)
         {
-            return _ctx_counter<Id>::get(cb) == Value;
+            return Pred{}(_ctx_counter<Id>::get(cb));
         }
 
         template <typename Context>
@@ -206,6 +206,26 @@ struct _ctx_ceq<H, T...> : branch_base
 
 namespace lexyd
 {
+template <int Value>
+struct _eq
+{
+    template <typename T>
+    constexpr bool operator()(T id) const noexcept
+    {
+        return id == Value;
+    }
+};
+
+template <int Value>
+struct _neq
+{
+    template <typename T>
+    constexpr bool operator()(T id) const noexcept
+    {
+        return id != Value;
+    }
+};
+
 template <typename Id>
 struct _ctx_counter_dsl
 {
@@ -235,14 +255,30 @@ struct _ctx_counter_dsl
         return _ctx_cpush<Id, Rule, -1>{};
     }
 
+    template <typename Pred>
+    constexpr auto is() const
+    {
+        return _ctx_cis<Id, Pred>{};
+    }
+
     template <int Value>
     constexpr auto is() const
     {
-        return _ctx_cis<Id, Value>{};
+        return _ctx_cis<Id, _eq<Value>>{};
     }
     constexpr auto is_zero() const
     {
         return is<0>();
+    }
+
+    template <int Value>
+    constexpr auto is_not() const
+    {
+        return _ctx_cis<Id, _neq<Value>>{};
+    }
+    constexpr auto is_not_zero() const
+    {
+        return is_not<0>();
     }
 
     constexpr auto value() const

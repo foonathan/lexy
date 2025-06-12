@@ -1,5 +1,11 @@
 = Changelog
 
+== Upcoming
+
+=== New features
+
+* Add `dsl::context_counter::is<Pred>()` and convenience overloads to check whether the value matches some predicate (#238, #239).
+
 == Release 2025.05.0
 
 === Potential breaking changes
@@ -13,7 +19,7 @@
 * Deprecate the `lexy::parse_tree::builder::finish()` overload that does not take a `remaining_input`.
 * The typo `lexy::code_point::spaing_mark` was fixed to `spacing_mark`.
 
-=== New Features
+=== New features
 
 * **Experimental**: Add `lexy::parse_tree_input` and `lexy::dsl::tnode`/`lexy::dsl::pnode` to support multi-pass parsing.
 * Add `lexy::dsl::byte.if_`/`set`/`range`/`ascii` methods to match specific bytes.

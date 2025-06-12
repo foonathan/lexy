@@ -27,9 +27,16 @@ namespace lexy::dsl
         constexpr _rule_ auto push(_rule_ auto r) const;
         constexpr _rule_ auto pop(_rule_ auto r) const;
 
+        template <typename Pred>
+        constexpr _branch-rule_ auto is() const;
+
         template <int Value>
         constexpr _branch-rule_ auto is() const;
         constexpr _branch-rule_ auto is_zero() const;
+
+        template <int Value>
+        constexpr _branch-rule_ auto is_not() const;
+        constexpr _branch-rule_ auto is_not_zero() const;
 
         constexpr _rule_ auto value() const;
     };
@@ -116,29 +123,44 @@ Values::
 
 CAUTION: The count includes any whitespace characters.
 
-=== Branch rules `.is()`, `.is_zero()`
+=== Branch rule `.is()` and variants
 
 {{% interface %}}
 ----
-template <int Value>
+template <typename Pred>
 constexpr _branch-rule_ auto is() const;
 
+template <int Value>
+constexpr _branch-rule_ auto is() const
+{
+    return is<_equal-to-Value_>();
+}
 constexpr _branch-rule_ auto is_zero() const
 {
     return is<0>();
 }
+
+template <int Value>
+constexpr _branch-rule_ auto is_not() const
+{
+    return is<_not-equal-to-Value_>();
+}
+constexpr _branch-rule_ auto is_not_zero() const
+{
+    return is_not<0>();
+}
 ----
 
 [.lead]
-`.is()` and `.is_zero()` return {{% branch-rule %}}s that check the value of the counter.
+`.is()` and variants return {{% branch-rule %}}s that check the value of the counter.
 
 Requires::
-  A counter with the name `Id` has been created in the current context,
-  i.e. `.create()` has been parsed earlier.
+  * A counter with the name `Id` has been created in the current context, i.e. `.create()` has been parsed earlier.
+  * `Pred` is a default-constructible function object that can be called with an `int` and returns a `bool`.
 Parsing::
   Matches everything, without consuming anything.
 Branch parsing::
-  Backtracks unless the value of the boolean with name `Id` of the current context is `Value` (`.is()`) or `0` (`.is_zero()`).
+  Backtracks unless the value of the counter with name `Id` of the current context matches the predicate `Pred`, as if doing `Pred()(value)`.
   Then matches everything without consuming anything.
 Errors::
   None.
