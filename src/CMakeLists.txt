@@ -1,8 +1,8 @@
 # Copyright (C) 2020-2025 Jonathan Müller and lexy contributors
 # SPDX-License-Identifier: BSL-1.0
 
-get_filename_component(include_dir ${CMAKE_CURRENT_SOURCE_DIR}/../include/lexy ABSOLUTE)
-get_filename_component(ext_include_dir ${CMAKE_CURRENT_SOURCE_DIR}/../include/lexy_ext ABSOLUTE)
+set(include_dir "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include/lexy>$<INSTALL_INTERFACE:include/lexy>")
+set(ext_include_dir "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include_lexy_ext>$<INSTALL_INTERFACE:include/lexy_ext>")
 set(header_files
         ${include_dir}/_detail/any_ref.hpp
         ${include_dir}/_detail/assert.hpp
@@ -210,7 +210,7 @@ endif()
 add_library(lexy_file STATIC)
 add_alias(lexy::file lexy_file)
 target_link_libraries(lexy_file PRIVATE foonathan::lexy::dev)
-target_sources(lexy_file PRIVATE input/file.cpp)
+target_sources(lexy_file PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/input/file.cpp)
 
 # Link to enable unicode database.
 add_library(lexy_unicode INTERFACE)
