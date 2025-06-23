@@ -218,7 +218,7 @@ target_compile_definitions(lexy_unicode INTERFACE LEXY_HAS_UNICODE_DATABASE=1)
 # Link to have extension headers.
 add_library(lexy_ext INTERFACE)
 add_alias(lexy::ext lexy_ext)
-target_sources(lexy_ext INTERFACE ${ext_headers_files})
+target_sources(lexy_ext INTERFACE ${ext_header_files})
 
 # Umbrella target with all components.
 add_library(lexy INTERFACE)
