@@ -14,6 +14,7 @@ bool json_pegtl(const lexy::buffer<lexy::utf8_encoding>& input);
 bool json_nlohmann(const lexy::buffer<lexy::utf8_encoding>& input);
 bool json_rapid(const lexy::buffer<lexy::utf8_encoding>& input);
 bool json_boost(const lexy::buffer<lexy::utf8_encoding>& input);
+bool json_glaze(const lexy::buffer<lexy::utf8_encoding>& input);
 
 auto get_data(const char* file_name)
 {
@@ -96,6 +97,8 @@ const char* output_suffix()
     A JSON validator using https://github.com/Tencent/rapidjson[rapidjson] implemented using a SAX parser with the `rapidjson::BaseReaderHandler`.
 `Boost.JSON`::
     A JSON validator using https://github.com/boostorg/json[Boost.JSON] implemented using a custom parse handler.
+`glaze`::
+    A JSON validator using https://github.com/stephenberry/glaze[glaze].
 
 == The inputs
 
@@ -145,7 +148,7 @@ int main(int argc, char* argv[])
 #ifdef LEXY_HAS_BOOST_JSON
             b.run("Boost.JSON", [&] { return json_boost(data); });
 #endif
-
+            b.run("glaze", [&] { return json_glaze(data); });
             b.render(output_template(), out);
         }
     };

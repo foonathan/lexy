@@ -69,3 +69,8 @@ if (Boost_FOUND)
     target_compile_definitions(lexy_benchmark_json PRIVATE LEXY_HAS_BOOST_JSON)
 endif()
 
+# compare glaze
+FetchContent_Declare(glaze URL https://github.com/stephenberry/glaze/archive/main.zip)
+FetchContent_MakeAvailable(glaze)
+target_sources(lexy_benchmark_json PRIVATE glaze.cpp)
+target_link_libraries(lexy_benchmark_json PRIVATE glaze::glaze)
