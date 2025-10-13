@@ -22723,7 +22723,7 @@ namespace lexy::_detail
 template <typename T>
 class buffer_builder
 {
-    static_assert(std::is_trivial_v<T>);
+    static_assert(std::is_trivially_copyable_v<T> && std::is_trivially_default_constructible_v<T>);
 
     static constexpr std::size_t total_size_bytes = 1024;
     static constexpr std::size_t stack_buffer_size
