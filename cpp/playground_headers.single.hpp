@@ -2674,31 +2674,27 @@ namespace _detail
 
         parse_context_var_base* vars;
 
-        int  cur_depth, max_depth;
-        bool enable_whitespace_skipping;
+        int cur_depth, max_depth;
 
         constexpr parse_context_control_block(Handler&& handler, State* state,
                                               std::size_t max_depth)
-        : parse_handler(LEXY_MOV(handler)), parse_state(state), //
-          vars(nullptr),                                        //
-          cur_depth(0), max_depth(static_cast<int>(max_depth)), enable_whitespace_skipping(true)
+        : parse_handler(LEXY_MOV(handler)), parse_state(state), vars(nullptr), cur_depth(0),
+          max_depth(static_cast<int>(max_depth))
         {}
 
         template <typename OtherHandler>
         constexpr parse_context_control_block(Handler&& handler,
                                               parse_context_control_block<OtherHandler, State>* cb)
         : parse_handler(LEXY_MOV(handler)), parse_state(cb->parse_state), //
-          vars(cb->vars), cur_depth(cb->cur_depth), max_depth(cb->max_depth),
-          enable_whitespace_skipping(cb->enable_whitespace_skipping)
+          vars(cb->vars), cur_depth(cb->cur_depth), max_depth(cb->max_depth)
         {}
 
         template <typename OtherHandler>
         constexpr void copy_vars_from(parse_context_control_block<OtherHandler, State>* cb)
         {
-            vars                       = cb->vars;
-            cur_depth                  = cb->cur_depth;
-            max_depth                  = cb->max_depth;
-            enable_whitespace_skipping = cb->enable_whitespace_skipping;
+            vars      = cb->vars;
+            cur_depth = cb->cur_depth;
+            max_depth = cb->max_depth;
         }
     };
 } // namespace _detail
@@ -2727,6 +2723,7 @@ struct _pc
     typename Handler::event_handler                       handler;
     _detail::parse_context_control_block<Handler, State>* control_block;
     _detail::lazy_init<value_type>                        value;
+    int                                                   whitespace_disable_count = 0;
 
     constexpr explicit _pc(_detail::parse_context_control_block<Handler, State>* cb)
     : handler(Production{}), control_block(cb)
@@ -13067,7 +13064,7 @@ struct automatic_ws_parser
     LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
     {
         if (!std::is_base_of_v<disable_whitespace_skipping, NextParser> //
-            && context.control_block->enable_whitespace_skipping)
+            && context.whitespace_disable_count == 0)
         {
             using whitespace = lexy::production_whitespace<typename Context::production,
                                                            typename Context::whitespace_production>;
@@ -13132,8 +13129,8 @@ struct _wsn : _copy_base<Rule>
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            // Enable automatic whitespace skipping again.
-            context.control_block->enable_whitespace_skipping = true;
+            // Potentially enable automatic whitespace skipping again.
+            --context.whitespace_disable_count;
             // And skip whitespace once.
             return lexy::whitespace_parser<Context, NextParser>::parse(context, reader,
                                                                        LEXY_FWD(args)...);
@@ -13163,7 +13160,7 @@ struct _wsn : _copy_base<Rule>
         LEXY_PARSER_FUNC auto finish(Context& context, Reader& reader, Args&&... args)
         {
             // Finish the rule with whitespace skipping disabled.
-            context.control_block->enable_whitespace_skipping = false;
+            ++context.whitespace_disable_count;
             return rule.template finish<_pc<NextParser>>(context, reader, LEXY_FWD(args)...);
         }
     };
@@ -13185,7 +13182,7 @@ struct _wsn : _copy_base<Rule>
             else
             {
                 // Parse the rule with whitespace skipping disabled.
-                context.control_block->enable_whitespace_skipping = false;
+                ++context.whitespace_disable_count;
                 using parser = lexy::parser_for<Rule, _pc<NextParser>>;
                 return parser::parse(context, reader, LEXY_FWD(args)...);
             }
