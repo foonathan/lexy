@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSL-1.0
 
 set(include_dir "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include/lexy>$<INSTALL_INTERFACE:include/lexy>")
-set(ext_include_dir "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include_lexy_ext>$<INSTALL_INTERFACE:include/lexy_ext>")
+set(ext_include_dir "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include/lexy_ext>$<INSTALL_INTERFACE:include/lexy_ext>")
 set(header_files
         ${include_dir}/_detail/any_ref.hpp
         ${include_dir}/_detail/assert.hpp
