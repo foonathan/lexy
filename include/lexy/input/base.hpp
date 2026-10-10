@@ -110,7 +110,7 @@ constexpr bool input_is_view = std::is_trivially_copyable_v<Input>;
 
 template <typename Reader, typename CharT>
 constexpr bool char_type_compatible_with_reader
-    = (std::is_same_v<CharT, typename Reader::encoding::char_type>)
+    = std::is_same_v<CharT, typename Reader::encoding::char_type>
       || Reader::encoding::template is_secondary_char_type<CharT>();
 } // namespace lexy
 

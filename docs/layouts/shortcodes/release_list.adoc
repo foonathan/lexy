@@ -1,4 +1,4 @@
-{{ range sort $.Site.Data.tags "date" "desc" }}
+{{ range sort hugo.Data.tags "date" "desc" }}
 +++<h2> {{ .name }} {{ if .prerelease }} <i>{{ (resources.Get "icons/beta.svg").Content | safeHTML }} {{ end }}</i> </h2>+++
 +++<i>{{ (resources.Get "icons/calender.svg").Content | safeHTML }}</i>+++ {{ .date | time.Format "2006-01-02" }}
 +++<i>{{ (resources.Get "icons/github.svg").Content | safeHTML }}</i>+++ link:{{ .url }}[Github]

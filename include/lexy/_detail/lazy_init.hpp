@@ -184,7 +184,7 @@ public:
     constexpr T& emplace(T& ref)
     {
         _ptr = &ref;
-        return ref;
+        return ref; // NOLINT(bugprone-return-const-ref-from-parameter): intentionally borrows ref
     }
 
     template <typename Fn, typename... Args>

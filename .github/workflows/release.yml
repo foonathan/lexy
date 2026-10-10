@@ -9,9 +9,9 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Create build environment
         run: cmake -E make_directory build
@@ -37,7 +37,7 @@ jobs:
           file: build/lexy-src.zip
           tag: ${{ github.ref }}
       - name: Create post PR for this release
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@v8
         with:
           title: Post-release ${{ github.event.release.tag_name }}
           commit-message: Post-release ${{ github.event.release.tag_name }}

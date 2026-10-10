@@ -7,18 +7,16 @@ on:
 
 jobs:
   sanitizers:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Install ninja
-      run: sudo apt-get -qq update && sudo apt-get install -y ninja-build
+    - uses: actions/checkout@v7
 
     - name: Create Build Environment
       run: cmake -E make_directory build
     - name: Configure
       working-directory: build/
-      run: cmake -GNinja $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-DLEXY_DISABLE_CONSTEXPR_TESTS -fsanitize=address,undefined,leak -fno-sanitize-recover=all" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined,leak"
+      run: cmake -GNinja "$GITHUB_WORKSPACE" -DCMAKE_CXX_COMPILER=g++-15 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-DLEXY_DISABLE_CONSTEXPR_TESTS -fsanitize=address,undefined,leak -fno-sanitize-recover=all" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined,leak"
     - name: Build
       working-directory: build/
       run: cmake --build .
@@ -29,35 +27,30 @@ jobs:
         ASAN_OPTIONS: detect_stack_use_after_return=1
 
   clang-tidy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Create Build Environment
       run: cmake -E make_directory build
-    - name: Install ninja and clang-tidy
-      run: sudo apt-get -qq update && sudo apt-get install -y ninja-build clang-tidy-18
-
     - name: Configure
       working-directory: build/
-      run: cmake -GNinja $GITHUB_WORKSPACE -DCMAKE_CXX_CLANG_TIDY="clang-tidy-18;-extra-arg=-Wno-unknown-warning-option"
+      run: cmake -GNinja "$GITHUB_WORKSPACE" -DCMAKE_CXX_COMPILER=clang++-22 -DCMAKE_CXX_CLANG_TIDY=clang-tidy-22
     - name: Build
       working-directory: build/
       run: cmake --build . --target lexy_test lexy_ext_test
 
   benchmarks: # just to ensure that they are compiled
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Create Build Environment
       run: cmake -E make_directory build
-    - name: Install ninja
-      run: sudo apt-get -qq update && sudo apt-get install -y ninja-build
 
     - name: Configure
       working-directory: build/
-      run: cmake -GNinja $GITHUB_WORKSPACE -DLEXY_BUILD_BENCHMARKS=ON
+      run: cmake -GNinja "$GITHUB_WORKSPACE" -DCMAKE_CXX_COMPILER=g++-15 -DLEXY_BUILD_BENCHMARKS=ON -DLEXY_BUILD_EXAMPLES=OFF -DLEXY_BUILD_TESTS=OFF
     - name: Build
       working-directory: build/
       run: cmake --build .

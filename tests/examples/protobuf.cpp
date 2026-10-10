@@ -65,9 +65,11 @@ namespace ast
 
 TEST_CASE("field")
 {
-    auto parse = [](auto... bytes) {
-        std::vector<unsigned char> vec{static_cast<unsigned char>(bytes)...};
-        auto                       input = lexy::string_input(vec.data(), vec.size());
+    // Byte fields borrow the input, which must outlive the returned parse result.
+    std::vector<unsigned char> storage;
+    auto parse = [&](auto... bytes) {
+        storage    = {static_cast<unsigned char>(bytes)...};
+        auto input = lexy::string_input(storage.data(), storage.size());
         return lexy::parse<grammar::field>(input, lexy::noop);
     };
 
@@ -161,9 +163,10 @@ TEST_CASE("field")
 
 TEST_CASE("message")
 {
-    auto parse = [](auto... bytes) {
-        unsigned char array[] = {static_cast<unsigned char>(bytes)..., 0};
-        auto          input   = lexy::string_input(array, sizeof...(bytes));
+    std::vector<unsigned char> storage;
+    auto parse = [&](auto... bytes) {
+        storage    = {static_cast<unsigned char>(bytes)...};
+        auto input = lexy::string_input(storage.data(), storage.size());
         return lexy::parse<grammar::message>(input, lexy::noop);
     };
 

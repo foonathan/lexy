@@ -130,7 +130,7 @@ public:
         constexpr bool equal(stable_iterator rhs) const noexcept
         {
             if (!_buffer || !rhs._buffer)
-                return !_buffer && !rhs._buffer;
+                return _buffer == nullptr && rhs._buffer == nullptr;
             else
             {
                 LEXY_PRECONDITION(_buffer == rhs._buffer);

@@ -23,7 +23,7 @@ struct my_allocator : std::allocator<T>
         CHECK(i == 42);
     }
     template <typename U>
-    my_allocator(my_allocator<U>)
+    my_allocator(const my_allocator<U>&)
     {}
 };
 } // namespace

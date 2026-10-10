@@ -1,0 +1,59 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "enabledManagers": [
+    "github-actions",
+    "custom.regex"
+  ],
+  "semanticCommits": "enabled",
+  "semanticCommitType": "build",
+  "automerge": false,
+  "prConcurrentLimit": 3,
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)CMakeLists\\.txt$/"
+      ],
+      "matchStrings": [
+        "https://github\\.com/(?<depName>[^/]+/[^/]+)/archive/(?:refs/tags/)?(?<currentValue>v?\\d+\\.\\d+\\.\\d+)\\.zip"
+      ],
+      "datasourceTemplate": "github-tags"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)CMakeLists\\.txt$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>git-refs) depName=(?<depName>\\S+) version=(?<currentValue>\\S+)\\s+(?:set\\(\\w+ |FetchContent_Declare\\(\\w+ URL https://github\\.com/[^/]+/[^/]+/archive/)(?<currentDigest>[a-f0-9]{40})"
+      ],
+      "versioningTemplate": "git"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "semanticCommitType": "ci"
+    },
+    {
+      "matchPackageNames": [
+        "gohugoio/hugo"
+      ],
+      "semanticCommitType": "docs"
+    },
+    {
+      "description": "PEGTL 4 removed the contrib/json.hpp API used by the benchmark.",
+      "matchPackageNames": [
+        "taocpp/PEGTL"
+      ],
+      "allowedVersions": "<4.0.0"
+    }
+  ],
+  "ignorePaths": []
+}

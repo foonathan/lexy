@@ -132,13 +132,14 @@ ctest
 === Benchmarks
 
 Benchmarks are only available if `LEXY_BUILD_BENCHMARKS` is `ON` (not the default).
+The JSON comparison requires CMake 3.31 and a compiler with C++23 support for Glaze.
 It will automatically fetch nanobench and necessary data files.
 Refer to the `benchmarks/` folder for details.
 
 === Docs
 
 Docs can only be built if `LEXY_BUILD_DOCS` is `ON` (not the default).
-It requires that you have installed https://gohugo.io/[hugo], https://asciidoctor.org/[Asciidoctor], and https://github.com/pygments/pygments.rb[pygments.rb].
+It requires Hugo Extended 0.167.0 or newer, https://asciidoctor.org/[Asciidoctor], and https://rouge.jneen.net/[Rouge].
 Docs can be build by two targets:
 
 `lexy_docs_serve`::

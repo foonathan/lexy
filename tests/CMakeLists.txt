@@ -4,7 +4,7 @@
 # Fetch doctest.
 message(STATUS "Fetching doctest")
 include(FetchContent)
-FetchContent_Declare(doctest URL https://github.com/doctest/doctest/archive/refs/tags/v2.4.12.zip DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+FetchContent_Declare(doctest URL https://github.com/doctest/doctest/archive/refs/tags/v2.5.3.zip)
 FetchContent_MakeAvailable(doctest)
 
 # A generic test target.
@@ -31,6 +31,7 @@ add_test(NAME calculator COMMAND lexy_test_calculator)
 add_test(NAME email COMMAND lexy_test_email)
 add_test(NAME ip COMMAND lexy_test_ip_address)
 add_test(NAME json COMMAND lexy_test_json)
+add_test(NAME protobuf COMMAND lexy_test_protobuf)
 add_test(NAME shell COMMAND lexy_test_shell)
 add_test(NAME xml COMMAND lexy_test_xml)
 add_test(NAME turing COMMAND lexy_test_turing)
