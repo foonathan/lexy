@@ -520,8 +520,6 @@ struct _expr : rule_base
             context.on(_ev::operation_chain_finish{}, LEXY_MOV(start_event), reader.position());
             return result;
         }
-
-        return false; // unreachable
     }
 
     template <typename NextParser>

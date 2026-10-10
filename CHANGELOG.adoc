@@ -11,6 +11,7 @@
 * `dsl::no_whitespace` did not handle nested `dsl::no_whitespace` correctly.
 * `dsl::no_whitespace` did not re-enable whitespace in child productions.
 * Improve compiler support (#254) and CMake (#244).
+* Remove an unreachable return in expression parsing that triggers MSVC warning C4702 (#266).
 
 == Release 2025.05.0
 
