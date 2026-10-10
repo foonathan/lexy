@@ -465,6 +465,13 @@ using _detect_scan_state = decltype(Context::production::scan(LEXY_DECLVAL(Scann
 
 struct _scan : rule_base
 {
+    template <typename Context, typename Reader>
+    static constexpr auto _make_scanner(Context& context, Reader& reader)
+    {
+        // MSVC does not reliably grant the nested parser access to the private constructor.
+        return lexy::rule_scanner<Context, Reader>(context, reader);
+    }
+
     template <typename NextParser>
     struct p
     {
@@ -494,7 +501,7 @@ struct _scan : rule_base
         template <typename Context, typename Reader, typename... Args>
         LEXY_PARSER_FUNC static bool parse(Context& context, Reader& reader, Args&&... args)
         {
-            lexy::rule_scanner scanner(context, reader);
+            auto scanner = _scan::_make_scanner(context, reader);
             return _parse(scanner, context, reader, LEXY_FWD(args)...);
         }
     };

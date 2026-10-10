@@ -4,6 +4,9 @@
 #include <lexy/dsl/scan.hpp>
 
 #include "verify.hpp"
+#include <cstdint>
+#include <lexy/action/parse.hpp>
+#include <lexy/callback/noop.hpp>
 #include <lexy/dsl/branch.hpp>
 #include <lexy/dsl/capture.hpp>
 #include <lexy/dsl/eof.hpp>
@@ -15,6 +18,21 @@
 
 namespace
 {
+struct constant_scan : lexy::scan_production<std::int64_t>
+{
+    template <typename Context, typename Reader>
+    static scan_result scan(lexy::rule_scanner<Context, Reader>&)
+    {
+        return 42;
+    }
+};
+
+struct nested_scan
+{
+    static constexpr auto rule  = dsl::p<constant_scan>;
+    static constexpr auto value = lexy::forward<std::int64_t>;
+};
+
 struct simple_scan : lexy::scan_production<int>, test_production
 {
     // We need to ensure that the input is actually advanced.
@@ -136,6 +154,24 @@ struct my_error
     }
 };
 } // namespace
+
+TEST_CASE("scan_production")
+{
+    auto input = lexy::buffer<lexy::utf8_char_encoding>("", std::size_t(0));
+
+    SUBCASE("top-level")
+    {
+        auto result = lexy::parse<constant_scan>(input, lexy::noop);
+        REQUIRE(result);
+        CHECK(result.value() == 42);
+    }
+    SUBCASE("nested")
+    {
+        auto result = lexy::parse<nested_scan>(input, lexy::noop);
+        REQUIRE(result);
+        CHECK(result.value() == 42);
+    }
+}
 
 TEST_CASE("dsl::scan")
 {
